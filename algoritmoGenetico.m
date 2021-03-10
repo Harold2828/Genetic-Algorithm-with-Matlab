@@ -1,6 +1,6 @@
 function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,altura,areaLibre)
-
 f = waitbar(0,'Está cargando el programa, por favor espere...');
+try
 rng(1);
 %Ecuaciones
 % maxPanel=@(eficiencia,areaLibre,irradiancia,potenciaPanel)...
@@ -216,13 +216,15 @@ memory_SOCi=zeros(1,1);
 memory_SOCL=zeros(1,length(potencia_requerida));
 battery.SOCi=memory_SOCi;
 battery.SOCL=memory_SOCL;
-keep_ans=zeros(length(potencia_requerida),5);
+keep_ans=zeros(length(potencia_requerida),6);
 keep_ans(:,2)=potencia_requerida;
+
 for hora=1:length(potencia_requerida)
     [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
     keep_ans(hora,[1,3:end])=[potenciaUsada.energiaGenerada,...
                               potenciaUsada.panel,...
                               potenciaUsada.turbina,...
+                              battery.SOCL(hora),...
                               potenciaUsada.diesel];
 end
  keep_ansTable=array2table(keep_ans(:,1:2),'VariableNames',{'EnergiaGenerada','EnergiaRequerida'});
@@ -259,7 +261,7 @@ end
 
 vPotenciasNew=keep_ans(:,3:end);
 
-vPotencias=[vPotencias,sum(vPotencias(:,1:end-1),2)];
+vPotencias=[vPotencias,sum(vPotenciasNew(:,1:end),2)]; %Error aquí
 diaName=string(zeros((length(vPotencias)/24),1));
 vPotenciasNew=[];
 try
@@ -325,6 +327,14 @@ dieselU.energiaTiempo=pAcumUsed(:,1).*10^-3.*tiempo;
 t10=table(panel.energiaTiempo,turbina.energiaTiempo,dieselU.energiaTiempo,'VariableNames',{'PVkWhmonth','WindkWhmonth','dieselkWhmonth'});
 %Aquií termina
 close (f);
+catch ME
+    close(f);
+
+    messageError=sprintf("Ha ocurrido un error\n %s",ME.message);
+    f=errordlg(messageError,'Error');
+    pause(5)
+    close(f)
+end
 end
 %Para el cruce
 function [generacionNew]=reproduccion(genetic,results,k_friends,k_child)
