@@ -1,6 +1,6 @@
 function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,altura,areaLibre)
 
-tic
+f = waitbar(0,'Está cargando el programa, por favor espere...');
 rng(1);
 %Ecuaciones
 % maxPanel=@(eficiencia,areaLibre,irradiancia,potenciaPanel)...
@@ -24,7 +24,7 @@ v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
 %%
 %Especificaciones Algoritmo Genetico
 max_gen=200;
-pos_min=25e-5;
+pos_min=1e-5;
 number_equip=700;
 cutting=round(number_equip*0.35/2);
 prob_mutation=0.01;
@@ -71,6 +71,28 @@ config=energy_accumulator;
 
 distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potencia_requerida)*0.001)+1));
 for hora=1:length(potencia_requerida)
+    if hora ==1
+        tic;
+        waitbar(hora/length(potencia_requerida),f,'El programa está optimizando');
+    else
+        timeUsed=(timeOut+2)*length(potencia_requerida);
+        message2='segundos';
+        if timeUsed==1
+            message2='segundo';
+        end
+        if timeUsed>60
+            timeUsed=timeUsed/60;
+            message2='minutos';
+            if timeUsed>60
+                timeUsed=timeUsed/60;
+                message2='horas';
+            end
+        end
+        messageWaitbar=sprintf('El programa está optimizando\nEl tiempo de espera estimado es %d %s',char(timeUsed),message2);
+        waitbar(hora/length(potencia_requerida),f,messageWaitbar);
+    end
+    
+    
     generacion=1;
     memoria_lcoe=zeros(1,1);
     memoria_equipos=zeros(1,2);
@@ -111,6 +133,8 @@ for hora=1:length(potencia_requerida)
                 
                 config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
                 energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
+                %Incluyendo diesel 100%
+                
                 if ~fast_mode
                     mensajeUsing=sprintf("Graficas LCOE para la hora %d",hora);
                     figure ('Name',mensajeUsing)
@@ -162,6 +186,9 @@ for hora=1:length(potencia_requerida)
         turbina.cantidad(turbina.cantidad>mT(hora))=mT(hora);
         generacion=generacion+1;
     end
+    if hora==1
+        timeOut=toc;
+    end
 end
 %Aquí finaliza el procedimiento
 %Comienza el resto, tabalas.. imagenes...
@@ -189,14 +216,17 @@ memory_SOCi=zeros(1,1);
 memory_SOCL=zeros(1,length(potencia_requerida));
 battery.SOCi=memory_SOCi;
 battery.SOCL=memory_SOCL;
-keep_ans=zeros(length(potencia_requerida),2);
+keep_ans=zeros(length(potencia_requerida),5);
 keep_ans(:,2)=potencia_requerida;
 for hora=1:length(potencia_requerida)
     [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
-    keep_ans(hora,1)=[potenciaUsada.energiaGenerada];
+    keep_ans(hora,[1,3:end])=[potenciaUsada.energiaGenerada,...
+                              potenciaUsada.panel,...
+                              potenciaUsada.turbina,...
+                              potenciaUsada.diesel];
 end
- keep_ans=array2table(keep_ans,'VariableNames',{'EnergiaGenerada','EnergiaRequerida'});
- disp(keep_ans); %La tabla de generación de energia con la config. seleccionada
+ keep_ansTable=array2table(keep_ans(:,1:2),'VariableNames',{'EnergiaGenerada','EnergiaRequerida'});
+ disp(keep_ansTable); %La tabla de generación de energia con la config. seleccionada
 %%
 if ver_24
     [~,idx_sort]=sort(pdist2([a.Panel,a.Turbina,a.LCOE],config));
@@ -207,7 +237,6 @@ end
 
 disp(sum(energy_accumulator(:,1)))
 pie_chat_IM=figure ('Name','Pie chart de energia');
-toc
 pPused=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1));
 pTUsed=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2));
 pAcumUsed=sum(energy_accumulator(:,2),1)*10^3;
@@ -223,9 +252,13 @@ for i=1:length(labelsPorcentajes)
  pText(i).String=combinedtxt(i);
 end
 %%
-vPotencias=[pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1).*10^-3,...
-    pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2).*10^-3,...
-    energy_accumulator(:,1:2),potencia_requerida];
+
+%vPotencias=[pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1).*10^-3,...
+%    pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2).*10^-3,...
+%    energy_accumulator(:,1:2),potencia_requerida];
+
+vPotenciasNew=keep_ans(:,3:end);
+
 vPotencias=[vPotencias,sum(vPotencias(:,1:end-1),2)];
 diaName=string(zeros((length(vPotencias)/24),1));
 vPotenciasNew=[];
@@ -291,6 +324,7 @@ dieselU.energiaTiempo=pAcumUsed(:,1).*10^-3.*tiempo;
 
 t10=table(panel.energiaTiempo,turbina.energiaTiempo,dieselU.energiaTiempo,'VariableNames',{'PVkWhmonth','WindkWhmonth','dieselkWhmonth'});
 %Aquií termina
+close (f);
 end
 %Para el cruce
 function [generacionNew]=reproduccion(genetic,results,k_friends,k_child)

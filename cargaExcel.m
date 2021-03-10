@@ -1,6 +1,6 @@
 function [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida]=cargaExcel()
 %LMPC
-fullYear=true; %<---
+fullYear=false; %<---
 fullC=["25","26"];
 if fullYear
     fullC=["8785","8786"];
