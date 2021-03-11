@@ -1,5 +1,5 @@
 function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,altura,areaLibre)
-f = waitbar(0,'Est· cargando el programa, por favor espere...');
+f = waitbar(0,'Est√° cargando el programa, por favor espere...');
 try
 rng(1);
 %Ecuaciones
@@ -23,7 +23,7 @@ pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
 v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
 %%
 %Especificaciones Algoritmo Genetico
-max_gen=200;
+max_gen=200; %Por qu√© 200 ?
 pos_min=1e-5;
 number_equip=700;
 cutting=round(number_equip*0.35/2);
@@ -73,7 +73,7 @@ distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potenc
 for hora=1:length(potencia_requerida)
     if hora ==1
         tic;
-        waitbar(hora/length(potencia_requerida),f,'El programa est· optimizando');
+        waitbar(hora/length(potencia_requerida),f,'El programa est√° optimizando');
     else
         timeUsed=(timeOut+2)*length(potencia_requerida);
         message2='segundos';
@@ -88,7 +88,7 @@ for hora=1:length(potencia_requerida)
                 message2='horas';
             end
         end
-        messageWaitbar=sprintf('El programa est· optimizando\nEl tiempo de espera estimado es %d %s',char(timeUsed),message2);
+        messageWaitbar=sprintf('El programa est√° optimizando\nEl tiempo de espera estimado es %d %s',char(timeUsed),message2);
         waitbar(hora/length(potencia_requerida),f,messageWaitbar);
     end
     
@@ -176,7 +176,7 @@ for hora=1:length(potencia_requerida)
         timeOut=toc;
     end
 end
-%AquÌ finaliza el procedimiento
+%Aqu√≠ finaliza el procedimiento
 %Comienza el resto, tabalas.. imagenes...
 
 switch trp
@@ -229,7 +229,7 @@ for hora=1:length(potencia_requerida)
                               potenciaUsada.diesel];
 end
  keep_ansTable=array2table(keep_ans(:,1:2),'VariableNames',{'EnergiaGenerada','EnergiaRequerida'});
- disp(keep_ansTable); %La tabla de generaciÛn de energia con la config. seleccionada
+ disp(keep_ansTable); %La tabla de generaci√≥n de energia con la config. seleccionada
  keep_ans=keep_ans(:,[3:end,2,1]);
 %%
 if ver_24
@@ -304,18 +304,18 @@ try
     tabla_muestra=array2table(diasMuestra,'VariableNames',variablesName(end-1:end),'RowName',diaName);
     disp(tabla_muestra);
 catch
-    warning("Se requieren m·s datos");
+    warning("Se requieren m√°s datos");
 end
-    %La grafica de las lÌneas
-    figure('Name','Tabla de ComparaciÛn de las energÌas');
-    title('ComparaciÛn de energÌa');
+    %La grafica de las l√≠neas
+    figure('Name','Tabla de Comparaci√≥n de las energ√≠as');
+    title('Comparaci√≥n de energ√≠a');
     hold on
     plot(tabla_energias.EnergiaRequerida,'b-o','DisplayName','EnergiaRequerida');
     plot(tabla_energias.EnergiaGenerada,'k--','DisplayName','EnergiaGenerada');
     grid;
     legend();
     xlabel('Hora');
-    ylabel('EnergÌa kW');
+    ylabel('Energ√≠a kW');
 
 
 
@@ -327,7 +327,7 @@ turbina.energiaTiempo=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,tur
 dieselU.energiaTiempo=pAcumUsed(:,1).*10^-3.*tiempo;
 
 t10=table(panel.energiaTiempo,turbina.energiaTiempo,dieselU.energiaTiempo,'VariableNames',{'PVkWhmonth','WindkWhmonth','dieselkWhmonth'});
-%AquiÌ termina
+%Aqui√≠ termina
 close (f);
 catch ME
     close(f);
@@ -423,7 +423,7 @@ function printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_
     plot3(config(hora,2),config(hora,1),config(hora,3),'go','MarkerFaceColor','g')
     plot3(best_equipos(:,2),best_equipos(:,1),best_lcoe,'r+')
     legend('Promedio del grupo','Configuracion seleccionada','Mejor individuo')
-    figure ("Name","Promedio Vs Mejor individuo") %Por ahora dejemos esto as√≠
+    figure ("Name","Promedio Vs Mejor individuo") %Por ahora dejemos esto as√É¬≠
     plot(best_lcoe,'b-o')
     hold on
     plot(memoria_lcoe,'ro','MarkerFaceColor','r')
