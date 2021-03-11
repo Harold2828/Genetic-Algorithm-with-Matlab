@@ -68,7 +68,7 @@ mT(mT>max_turbina)=max_turbina;
 potenciaSuplida=zeros(length(potencia_requerida),1);
 energy_accumulator=zeros(length(potencia_requerida),3);
 config=energy_accumulator;
-
+structure_memory=struct();
 distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potencia_requerida)*0.001)+1));
 for hora=1:length(potencia_requerida)
     if hora ==1
@@ -134,27 +134,13 @@ for hora=1:length(potencia_requerida)
                 config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
                 energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
                 %Incluyendo diesel 100%
-                
+                structure_memory(hora).memoria_equipos=memoria_equipos;
+                structure_memory(hora).config=config;
+                structure_memory(hora).best_equipos=best_equipos;
+                structure_memory(hora).best_lcoe=best_lcoe;
+                structure_memory(hora).memoria_lcoe=memoria_lcoe;
                 if ~fast_mode
-                    mensajeUsing=sprintf("Graficas LCOE para la hora %d",hora);
-                    figure ('Name',mensajeUsing)
-                    plot3(memoria_equipos(:,2),memoria_equipos(:,1),memoria_lcoe,'k-')
-                    xlabel("Turbinas")
-                    ylabel("Panel")
-                    zlabel("LCOE")
-                    grid
-                    hold on
-                    plot3(config(hora,2),config(hora,1),config(hora,3),'go','MarkerFaceColor','g')
-                    plot3(best_equipos(:,2),best_equipos(:,1),best_lcoe,'r+')
-                    legend('Promedio del grupo','ConfiguraciÃ³n seleccionada','Mejor individuo')
-                    figure ("Name","Promedio Vs Mejor individuo") %Por ahora dejemos esto asÃ­
-                    plot(best_lcoe,'b-o')
-                    hold on
-                    plot(memoria_lcoe,'ro','MarkerFaceColor','r')
-                    grid
-                    xlabel("Iteracion")
-                    ylabel("LCOE")
-                    legend('Mejor LCOE','LCOE promedio')
+                    printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_lcoe)
                 end
                 break;
             end
@@ -209,6 +195,21 @@ switch trp
             ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
 end
 a=array2table(a,'variableNames',{'Panel','Turbina','LCOE','Numero bateria','Energia diesel','Horas diesel activo','IteracionMediana'});
+for hora=1:length(structure_memory)
+    operatorMin=pError(mean([structure_memory(hora).memoria_equipos(end,:),...
+        structure_memory(hora).memoria_lcoe(end)]),mean([a.Panel,a.Turbina,a.LCOE]));
+    if hora==1
+        horaWin=hora;
+        minValue=operatorMin;
+    elseif minValue>operatorMin
+        horaWin=hora;
+        minValue=operatorMin;
+        
+    end
+end
+%printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_lcoe)
+printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
+    structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
 disp(a);
 panel.cantidad=a.Panel;
 turbina.cantidad=a.Turbina;
@@ -229,6 +230,7 @@ for hora=1:length(potencia_requerida)
 end
  keep_ansTable=array2table(keep_ans(:,1:2),'VariableNames',{'EnergiaGenerada','EnergiaRequerida'});
  disp(keep_ansTable); %La tabla de generación de energia con la config. seleccionada
+ keep_ans=keep_ans(:,[3:end,2,1]);
 %%
 if ver_24
     [~,idx_sort]=sort(pdist2([a.Panel,a.Turbina,a.LCOE],config));
@@ -259,32 +261,32 @@ end
 %    pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2).*10^-3,...
 %    energy_accumulator(:,1:2),potencia_requerida];
 
-vPotenciasNew=keep_ans(:,3:end);
-
-vPotencias=[vPotencias,sum(vPotenciasNew(:,1:end),2)]; %Error aquí
-diaName=string(zeros((length(vPotencias)/24),1));
-vPotenciasNew=[];
 try
     i=1;
     while true
         pack1=24*(i-1);
         if pack1==0
             pack1=1;
+            vPotenciasNew=[];
         end
         pack2=24*i;
-        if i<=(length(vPotencias)/24)
-            vPotenciasNew=[vPotenciasNew;sum(vPotencias(pack1:pack2,:),1)];
-            diaName(i)="Dia "+string(i);
+        if i<=(length(keep_ans)/24)
+            vPotenciasNew=[vPotenciasNew;sum(keep_ans(pack1:pack2,:),1)];
+
             i=i+1;
         else
+            i=i-1;
+            diaName=repmat("Dia ",i,1)+string(1:i)';
             break;
         end
         
     end
 catch
     disp("Error en las imagenes, se mostraran todas las horas");
-    vPotenciasNew=vPotencias;
+    vPotenciasNew=keep_ans;
+    diaName=repmat("Hora ",length(keep_ans),1)+string((1:length(keep_ans)))';
 end
+vPotenciasNew(:,2)=repmat(mean(vPotenciasNew(:,2)),length(vPotenciasNew(:,2)),1);
 variablesName={'EnergiaPanel','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
 tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
 disp(tabla_energias)
@@ -297,7 +299,7 @@ try
         diaName(i)="Dia "+string(i);
         rango_1=rangos(i,1);
         rango_2=rangos(i,2);
-        diasMuestra(i,:)=sum(vPotencias(rango_1:rango_2,end-1:end),1);
+        diasMuestra(i,:)=sum(keep_ans(rango_1:rango_2,end-1:end),1);
     end
     tabla_muestra=array2table(diasMuestra,'VariableNames',variablesName(end-1:end),'RowName',diaName);
     disp(tabla_muestra);
@@ -305,15 +307,15 @@ catch
     warning("Se requieren más datos");
 end
     %La grafica de las líneas
-%     figure('Name','Tabla de Comparación de las energías');
-%     title('Comparación de energía');
-%     hold on
-%     plot(tabla_energias.EnergiaRequerida,'b-o','DisplayName','EnergiaRequerida');
-%     plot(tabla_energias.EnergiaGenerada,'k--','DisplayName','EnergiaGenerada');
-%     grid;
-%     legend();
-%     xlabel('Hora');
-%     ylabel('Energía kW');
+    figure('Name','Tabla de Comparación de las energías');
+    title('Comparación de energía');
+    hold on
+    plot(tabla_energias.EnergiaRequerida,'b-o','DisplayName','EnergiaRequerida');
+    plot(tabla_energias.EnergiaGenerada,'k--','DisplayName','EnergiaGenerada');
+    grid;
+    legend();
+    xlabel('Hora');
+    ylabel('Energía kW');
 
 
 
@@ -408,4 +410,25 @@ for dim=1:deep
     genetic(point,:,dim)=selected;
 end
 zerg=genetic;
+end
+function printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_lcoe)
+    mensajeUsing=sprintf("Graficas LCOE para la hora %d",hora);
+    figure ('Name',mensajeUsing)
+    plot3(memoria_equipos(:,2),memoria_equipos(:,1),memoria_lcoe,'k-')
+    xlabel("Turbinas")
+    ylabel("Panel")
+    zlabel("LCOE")
+    grid
+    hold on
+    plot3(config(hora,2),config(hora,1),config(hora,3),'go','MarkerFaceColor','g')
+    plot3(best_equipos(:,2),best_equipos(:,1),best_lcoe,'r+')
+    legend('Promedio del grupo','Configuracion seleccionada','Mejor individuo')
+    figure ("Name","Promedio Vs Mejor individuo") %Por ahora dejemos esto asÃ­
+    plot(best_lcoe,'b-o')
+    hold on
+    plot(memoria_lcoe,'ro','MarkerFaceColor','r')
+    grid
+    xlabel("Iteracion")
+    ylabel("LCOE")
+    legend('Mejor LCOE','LCOE promedio')
 end
