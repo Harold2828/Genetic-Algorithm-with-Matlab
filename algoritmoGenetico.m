@@ -23,7 +23,8 @@ pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
 v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
 %%
 %Especificaciones Algoritmo Genetico
-max_gen=200; %Por qué 200 ?
+max_gen=200; %Ñero este es un comentario de ejemplo
+             % Toca revisar la formula de las baterias, esto es de erdad D:
 pos_min=1e-5;
 number_equip=700;
 cutting=round(number_equip*0.35/2);
@@ -194,7 +195,7 @@ switch trp
         a=[config(hora_ver,:),...
             ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
 end
-a=array2table(a,'variableNames',{'Panel','Turbina','LCOE','Numero bateria','Energia diesel','Horas diesel activo','IteracionMediana'});
+a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Energia diesel','Horas diesel activo','IteracionMediana'});
 for hora=1:length(structure_memory)
     operatorMin=pError(mean([structure_memory(hora).memoria_equipos(end,:),...
         structure_memory(hora).memoria_lcoe(end)]),mean([a.Panel,a.Turbina,a.LCOE]));
@@ -287,7 +288,7 @@ catch
     diaName=repmat("Hora ",length(keep_ans),1)+string((1:length(keep_ans)))';
 end
 vPotenciasNew(:,2)=repmat(mean(vPotenciasNew(:,2)),length(vPotenciasNew(:,2)),1);
-variablesName={'EnergiaPanel','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
+variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
 tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
 disp(tabla_energias)
 
