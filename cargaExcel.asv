@@ -7,7 +7,7 @@ if fullYear
     fullC=[string(auto+1),string(auto+2)];
 end
 ro=@(temperatura,h)(354.049./temperatura.*exp(-0.034.*h./temperatura));
-rangos=["B2:B4";"B7:B9";"B12:B19";"B22:B27";"I3:I6"]; 
+rangos=["B2:B4";"B7:B9";"B12:B19";"B22:B26";"I3:I6"]; 
 nRangos=length(rangos); 
 exportar=struct("a",{});
 %%
@@ -41,8 +41,7 @@ for i=1:nRangos
             clima.densidadAire=reclamar_matrix(4);
             turbina.alturaReferencia=reclamar_matrix(5);
             turbina.alturaUsada=reclamar_matrix(6);
-            turbina.alpha=reclamar_matrix(7);
-            turbina.areaOcupada=reclamar_matrix(8);
+            turbina.alpha=reclamar_matrix(6);
         case 4
             %Modelo baterias
             battery.eficiencia=reclamar_matrix(1)./100;

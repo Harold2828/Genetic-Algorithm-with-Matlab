@@ -1,5 +1,5 @@
-function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,altura,areaLibre)
-f = waitbar(0,'Está cargando el programa, por favor espere...');
+function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,~,areaLibre)
+f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
 try
 rng(1);
 %Ecuaciones
@@ -15,7 +15,7 @@ maxPanel=@(potencia_requerida,irradiancia,area,eficiencia_panel)(ceil(potencia_r
 %Para la maxima cantidad de turbinas     
  maxTurbina=@(potenciaNecesaria,d_aire,area_barrido,eficiencia_turbina,vel_viento)...
      (ceil(potenciaNecesaria./(pot_turbina(d_aire,area_barrido,eficiencia_turbina,vel_viento).*10^-3)));
-rangos=[1129,1152;2113,2137;5953,5976;7369,7391];
+rangos=[1129,1152;2113,2137;5953,5976;7369,7391]; %Datos manual
 helpRandi=@(cantidadEquipo,minEquip,maxEquip)(randi([minEquip,maxEquip],cantidadEquipo,1));
 %Porcentaje de error
 pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
@@ -23,9 +23,8 @@ pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
 v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
 %%
 %Especificaciones Algoritmo Genetico
-max_gen=200; %Ñero este es un comentario de ejemplo
-             % Toca revisar la formula de las baterias, esto es de erdad D:
-pos_min=1e-5;
+max_gen=200;
+pos_min=5e-2;
 number_equip=700;
 cutting=round(number_equip*0.35/2);
 prob_mutation=0.01;
@@ -43,7 +42,6 @@ if h ==0
     h=10;
 end
 areaL=areaLibre;
-
 alpha=turbina.alpha;
 clima.velViento=v_h(h,h_ref,clima.velViento,alpha);
 lco.total=zeros(number_equip,1);
@@ -61,7 +59,7 @@ mP(isinf(mP))=0;
 mP(isnan(mP))=0;
 mP(mP>max_panel_area)=max_panel_area; 
 %Maxima turbina
-max_turbina=ceil(areaL/(153 * 27*0.01));
+max_turbina=ceil(areaL/(turbina.areaOcupada));
 mT=maxTurbina(potencia_requerida,clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento);
 mT(isinf(mT))=0;
 mT(isnan(mT))=0; 
@@ -198,7 +196,7 @@ end
 a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Energia diesel','Horas diesel activo','IteracionMediana'});
 for hora=1:length(structure_memory)
     operatorMin=pError(mean([structure_memory(hora).memoria_equipos(end,:),...
-        structure_memory(hora).memoria_lcoe(end)]),mean([a.Panel,a.Turbina,a.LCOE]));
+        structure_memory(hora).memoria_lcoe(end)]),mean([a.Modulo,a.Turbina,a.LCOE]));
     if hora==1
         horaWin=hora;
         minValue=operatorMin;
@@ -212,7 +210,7 @@ end
 printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
     structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
 disp(a);
-panel.cantidad=a.Panel;
+panel.cantidad=a.Modulo;
 turbina.cantidad=a.Turbina;
 memory_SOCi=zeros(1,1);
 memory_SOCL=zeros(1,length(potencia_requerida));
@@ -234,7 +232,7 @@ end
  keep_ans=keep_ans(:,[3:end,2,1]);
 %%
 if ver_24
-    [~,idx_sort]=sort(pdist2([a.Panel,a.Turbina,a.LCOE],config));
+    [~,idx_sort]=sort(pdist2([a.Modulo,a.Turbina,a.LCOE],config));
     keep_figures=[idx_sort(1)*2-1,idx_sort(1)*2];
     all_figs = findobj(0, 'type', 'figure');
     delete(setdiff(all_figs, keep_figures)); %
@@ -308,14 +306,14 @@ catch
     warning("Se requieren más datos");
 end
     %La grafica de las líneas
-    figure('Name','Tabla de Comparación de las energías');
+    figure('Name','Tabla de Comparación de las energías por días');
     title('Comparación de energía');
     hold on
     plot(tabla_energias.EnergiaRequerida,'b-o','DisplayName','EnergiaRequerida');
-    plot(tabla_energias.EnergiaGenerada,'k--','DisplayName','EnergiaGenerada');
+    plot(tabla_energias.EnergiaGenerada,'r-o','MarkerFaceColor','r','DisplayName','EnergiaGenerada');
     grid;
     legend();
-    xlabel('Hora');
+    xlabel('Día');
     ylabel('Energía kW');
 
 
@@ -323,7 +321,7 @@ end
 %%
 %para las tablas
 tiempo=1;
-panel.energiaTiempo=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia)).*a.Panel.*tiempo.*10^-3+sum(energy_accumulator(:,1)); %kWh/mes
+panel.energiaTiempo=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia)).*a.Modulo.*tiempo.*10^-3+sum(energy_accumulator(:,1)); %kWh/mes
 turbina.energiaTiempo=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento)).*a.Turbina.*tiempo.*10^-3;
 dieselU.energiaTiempo=pAcumUsed(:,1).*10^-3.*tiempo;
 
