@@ -30,12 +30,13 @@ tur_gen=p_Turbina(turbina.eficiencia,clima.densidadAire(hora),clima.velViento(ho
 %Energia renovable total
 renovable_gen=sum([pv_gen,tur_gen],2);
 %Sistemas que cargan baterias
-posGG=logical(renovable_gen>=potenciaRequeria(hora));
+posGG=logical(renovable_gen>potenciaRequeria(hora));
 posUG=~posGG;
 %%
-%Carga
+%Para cargar
 if isempty(battery.SOCi(posGG))==0
-    posMM_1=logical(battery.SOCi<battery.SOCMax);
+    %posMM_1=logical(battery.SOCi<battery.SOCMax);
+    posMM_1=ones(length(battery.SOCi),1); %
     posMM=logical(posMM_1.*posGG);
     if isempty(battery.SOCi(posMM))==0
         %Carga la bateria
@@ -45,16 +46,20 @@ if isempty(battery.SOCi(posGG))==0
     end
 end
 %%
-%Descarga
+%Para descargar
 if isempty(battery.SOCi(posUG))==0
-    posMm_1=logical(battery.SOCi>battery.SOCMin);
-    posMm=logical(posMm_1.*posUG);
+    %posMm_1=logical(battery.SOCi>battery.SOCMin);
+    posMm_1=battery.SOCi>battery.SOCMin;
+    posMm=logical(posMm_1.*posUG); %Para las que necesiten energía
     if isempty(battery.SOCi(posMm))==0
         antes=battery.SOCi(posMm);
         battery.SOCi(posMm)=bateria(inverter.eficiencia,battery.eficiencia,battery.SOCi(posMm),battery.SOCMax,...
             battery.SOCMin,battery.autoDescarga,renovable_gen(posMm),potenciaRequeria(hora),"descarga");
         %La perdida de energia
          battery.SOCL(posMm,hora)=antes-battery.SOCi(posMm);
+%          keep=battery.SOCL(posMm,hora);
+%          keep(keep<battery.SOCMin)=battery.SOCMin;
+%          battery.SOCL(posMm,hora)=keep;
          %La energia que aporta a la energia renovable
         renovable_gen(posMm,:)=renovable_gen(posMm,:)+battery.SOCi(posMm);
     end
@@ -98,7 +103,8 @@ end
             eBateria=carga(SOC,ind_auto,e_gen,e_demand,ef_inverter,ef_battery);
         otherwise
             eBateria=descarga(SOC,ind_auto,e_gen,e_demand,ef_inverter);
+            eBateria(eBateria>SOCMin)=SOCMin; %Porque la descarga es negativa
     end
-    eBateria(eBateria>SOCMax)=SOCMax;
-    eBateria(eBateria<SOCMin)=SOCMin;
+    %eBateria(eBateria>SOCMax)=SOCMax;
+    
  end

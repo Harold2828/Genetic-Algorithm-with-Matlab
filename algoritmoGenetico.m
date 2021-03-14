@@ -27,7 +27,7 @@ max_gen=200;
 pos_min=5e-2;
 number_equip=700;
 cutting=round(number_equip*0.35/2);
-prob_mutation=0.01;
+prob_mutation=0.01; %Dejar en 1%
 k_friends=round(number_equip.*0.35);
 ver_24=false;
 trp=false;
@@ -38,6 +38,7 @@ potencia_requerida=curva_de_carga;
 clima.altura=turbina.alturaReferencia;
 h_ref=turbina.alturaReferencia;
 h=turbina.alturaUsada;
+battery.valueSelected=0;
 if h ==0
     h=10;
 end
@@ -47,7 +48,7 @@ clima.velViento=v_h(h,h_ref,clima.velViento,alpha);
 lco.total=zeros(number_equip,1);
 memory_SOCi=zeros(number_equip,1);
 memory_SOCL=zeros(number_equip,length(potencia_requerida));
-
+cargaPromedioBaterias=zeros(length(potencia_requerida),1);
 pot_tubina_1=pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*10^-3;
 pot_panel_1=pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*10^-3;
 potencia_sePuedeGenerar=pot_tubina_1+pot_panel_1;
@@ -126,9 +127,13 @@ for hora=1:length(potencia_requerida)
                     hora_ver=distribucionHoras;
                 end
                 potenciaSuplida(hora)=mean(potenciaUsada.energiaGenerada);
-                memory_SOCi=ones(number_equip,1).*mean(battery.SOCi(~isoutlier(battery.SOCi)));
-                mem_SOCLH=ones(number_equip,1).*mean(battery.SOCL(~isoutlier(battery.SOCL(:,hora)),hora));
-                memory_SOCL(:,hora)=mem_SOCLH;
+                %memory_SOCi=ones(number_equip,1).*mean(battery.SOCi(~isoutlier(battery.SOCi)));
+                memory_SOCi=battery.SOCi;
+                %mem_SOCLH=ones(number_equip,1).*mean(battery.SOCL(~isoutlier(battery.SOCL(:,hora)),hora));
+                cargaPromedioBaterias(hora)=mean(memory_SOCi);
+                %memory_SOCL(:,hora)=mem_SOCLH;
+                
+                memory_SOCL(:,hora)=battery.SOCL(:,hora);
                 
                 config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
                 energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
@@ -175,6 +180,14 @@ for hora=1:length(potencia_requerida)
         timeOut=toc;
     end
 end
+%%
+%Temporal
+figure ('Name','Cambio carga baterias')
+plot(cargaPromedioBaterias,'g-o');
+xlabel("Horas");
+ylabel("EnergiaBaterias");
+grid()
+%%
 %Aquí finaliza el procedimiento
 %Comienza el resto, tabalas.. imagenes...
 
@@ -188,24 +201,28 @@ switch trp
             paneles_cantidad=mean(config(config(:,1)>0,1));
         end
         a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
-    
+        battery.valueSelected=ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax);
     case true
         a=[config(hora_ver,:),...
             ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
 end
 a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Energia diesel','Horas diesel activo','IteracionMediana'});
-for hora=1:length(structure_memory)
-    operatorMin=pError(mean([structure_memory(hora).memoria_equipos(end,:),...
-        structure_memory(hora).memoria_lcoe(end)]),mean([a.Modulo,a.Turbina,a.LCOE]));
-    if hora==1
-        horaWin=hora;
-        minValue=operatorMin;
-    elseif minValue>operatorMin
-        horaWin=hora;
-        minValue=operatorMin;
-        
-    end
-end
+setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
+setA=normalize(config);
+distancesset=pdist2(setM,setA);
+[~,horaWin]=min(distancesset);
+% for hora=1:length(structure_memory)
+%     operatorMin=pError(mean([structure_memory(hora).memoria_equipos(end,:),...
+%         structure_memory(hora).memoria_lcoe(end)]),mean([a.Modulo,a.Turbina,a.LCOE]));
+%     if hora==1
+%         horaWin=hora;
+%         minValue=operatorMin;
+%     elseif minValue>operatorMin
+%         horaWin=hora;
+%         minValue=operatorMin;
+%         
+%     end
+% end
 %printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_lcoe)
 printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
     structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
@@ -218,7 +235,8 @@ battery.SOCi=memory_SOCi;
 battery.SOCL=memory_SOCL;
 keep_ans=zeros(length(potencia_requerida),6);
 keep_ans(:,2)=potencia_requerida;
-
+memoria_batterias_u=[];
+battery.maxEnergySelected=battery.valueSelected*battery.SOCMax;
 for hora=1:length(potencia_requerida)
     [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
     keep_ans(hora,[1,3:end])=[potenciaUsada.energiaGenerada,...
@@ -226,30 +244,34 @@ for hora=1:length(potencia_requerida)
                               potenciaUsada.turbina,...
                               battery.SOCL(hora),...
                               potenciaUsada.diesel];
+    if battery.SOCi>battery.maxEnergySelected
+        battery.SOCi=battery.maxEnergySelected;
+    end
 end
  keep_ansTable=array2table(keep_ans(:,1:2),'VariableNames',{'EnergiaGenerada','EnergiaRequerida'});
  disp(keep_ansTable); %La tabla de generación de energia con la config. seleccionada
  keep_ans=keep_ans(:,[3:end,2,1]);
 %%
-if ver_24
-    [~,idx_sort]=sort(pdist2([a.Modulo,a.Turbina,a.LCOE],config));
-    keep_figures=[idx_sort(1)*2-1,idx_sort(1)*2];
-    all_figs = findobj(0, 'type', 'figure');
-    delete(setdiff(all_figs, keep_figures)); %
-end
-
 disp(sum(energy_accumulator(:,1)))
-pie_chat_IM=figure ('Name','Pie chart de energia');
+pie_chat_IM=figure ('Name','Diagrama de torta para energía');
 pPused=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1));
 pTUsed=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2));
 pAcumUsed=sum(energy_accumulator(:,2),1)*10^3;
-vectorPotencias=[pPused;pTUsed;pAcumUsed'];
+bAcumUsed=sum(energy_accumulator(:,1),1)*10^3;
+if bAcumUsed==0
+    vectorPotencias=[pPused;pTUsed;pAcumUsed];
+    labelsPorcentajes={'Modulos ','Turbinas eolicas ','Generador Diesel '}';
+else
+    vectorPotencias=[pPused;pTUsed;pAcumUsed;bAcumUsed];
+    labelsPorcentajes={'Modulos ','Turbinas eolicas ','Generador Diesel ','Baterias'}';
+end
+
 porcentajes=vectorPotencias/sum(vectorPotencias);
 %%
 pie_porcentajes=pie(porcentajes);
 pText = findobj(pie_porcentajes,'Type','text');
 percentValues = get(pText,'String'); 
-labelsPorcentajes={'Paneles ','Turbinas eolicas ','Generador Diesel '}';
+
 combinedtxt = strcat(labelsPorcentajes,percentValues); 
 for i=1:length(labelsPorcentajes)
  pText(i).String=combinedtxt(i);
