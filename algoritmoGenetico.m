@@ -258,7 +258,7 @@ pPused=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1)
 pTUsed=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2));
 pAcumUsed=sum(energy_accumulator(:,2),1)*10^3;
 bAcumUsed=sum(energy_accumulator(:,1),1)*10^3;
-if bAcumUsed==0
+if true
     vectorPotencias=[pPused;pTUsed;pAcumUsed];
     labelsPorcentajes={'Modulos ','Turbinas eolicas ','Generador Diesel '}';
 else
@@ -307,7 +307,7 @@ catch
     vPotenciasNew=keep_ans;
     diaName=repmat("Hora ",length(keep_ans),1)+string((1:length(keep_ans)))';
 end
-vPotenciasNew(:,2)=repmat(mean(vPotenciasNew(:,2)),length(vPotenciasNew(:,2)),1);
+vPotenciasNew(:,end)=repmat(mean(vPotenciasNew(:,end)),length(vPotenciasNew(:,end)),1);
 variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
 tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
 disp(tabla_energias)
@@ -320,7 +320,7 @@ try
         diaName(i)="Dia "+string(i);
         rango_1=rangos(i,1);
         rango_2=rangos(i,2);
-        diasMuestra(i,:)=sum(keep_ans(rango_1:rango_2,end-1:end),1);
+        diasMuestra(i,:)=[sum(keep_ans(rango_1:rango_2,end-1),1),vPotenciasNew(:,end)];
     end
     tabla_muestra=array2table(diasMuestra,'VariableNames',variablesName(end-1:end),'RowName',diaName);
     disp(tabla_muestra);
