@@ -189,7 +189,7 @@ ylabel("EnergiaBaterias");
 grid()
 %%
 %Aquí finaliza el procedimiento
-%Comienza el resto, tabalas.. imagenes...
+%Comienza el resto, tablas.. imagenes...
 
 switch trp
     case false
@@ -253,17 +253,17 @@ end
  keep_ans=keep_ans(:,[3:end,2,1]);
 %%
 disp(sum(energy_accumulator(:,1)))
-pie_chat_IM=figure ('Name','Diagrama de torta para energía');
+pie_chat_IM=figure ('Name','Diagrama de distribución energetica');
 pPused=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1));
 pTUsed=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2));
 pAcumUsed=sum(energy_accumulator(:,2),1)*10^3;
 bAcumUsed=sum(energy_accumulator(:,1),1)*10^3;
 if true
     vectorPotencias=[pPused;pTUsed;pAcumUsed];
-    labelsPorcentajes={'Modulos ','Turbinas eolicas ','Generador Diesel '}';
+    labelsPorcentajes={'Modulos PV ','Turbinas eolicas ','Generador(es) Diesel '}';
 else
     vectorPotencias=[pPused;pTUsed;pAcumUsed;bAcumUsed];
-    labelsPorcentajes={'Modulos ','Turbinas eolicas ','Generador Diesel ','Baterias'}';
+    labelsPorcentajes={'Modulos PV ','Turbinas eolicas ','Generador(es) Diesel ','Baterias'}';
 end
 
 porcentajes=vectorPotencias/sum(vectorPotencias);
@@ -328,15 +328,15 @@ catch
     warning("Se requieren más datos");
 end
     %La grafica de las líneas
-    figure('Name','Tabla de Comparación de las energías por días');
-    title('Comparación de energía');
+    figure('Name','Tabla de validación de la herramienta');
+    title('Validación de la herramienta');
     hold on
     plot(tabla_energias.EnergiaRequerida,'b-o','DisplayName','EnergiaRequerida');
     plot(tabla_energias.EnergiaGenerada,'r-o','MarkerFaceColor','r','DisplayName','EnergiaGenerada');
     grid;
     legend();
     xlabel('Día');
-    ylabel('Energía kW');
+    ylabel('Energía kWh');
 
 
 
@@ -444,7 +444,7 @@ function printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_
     plot3(config(hora,2),config(hora,1),config(hora,3),'go','MarkerFaceColor','g')
     plot3(best_equipos(:,2),best_equipos(:,1),best_lcoe,'r+')
     legend('Promedio del grupo','Configuracion seleccionada','Mejor individuo')
-    figure ("Name","Promedio Vs Mejor individuo") %Por ahora dejemos esto asÃ­
+    figure ("Name","Grafico Criterio de Parada") %Por ahora dejemos esto asÃ­
     plot(best_lcoe,'b-o')
     hold on
     plot(memoria_lcoe,'ro','MarkerFaceColor','r')
