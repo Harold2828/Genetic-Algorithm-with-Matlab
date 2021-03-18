@@ -1,6 +1,6 @@
 function [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida]=cargaExcel()
 %LMPC
-fullYear=false; %<---
+fullYear=true; %<---
 fullC=["25","26"];
 if fullYear
     auto=length(table2array(readtable("Entradas.xlsx","sheet","Eficiencia del modulo FV","range","A:A")));
