@@ -1,13 +1,15 @@
 function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,~,areaLibre)
 infanteria=true;
-if exist('todosLosDatos.mat')==2
-    inicialMessage=sprintf('Existen datos guardados previamente\n¿Desea cargalos?');
-    load_data=questdlg(inicialMessage,'Guardar','Sí','No','Sí');
-    if load_data=='Sí'
-        load('todosLosDatos.mat');
-        infanteria=false;
-    end
-end
+
+% if exist('todosLosDatos.mat')==2
+%     inicialMessage=sprintf('Existen datos guardados previamente\n¿Desea cargalos?');
+%     load_data=questdlg(inicialMessage,'Guardar','Sí','No','Sí');
+%     if load_data=='Sí'
+%         load('todosLosDatos.mat');
+%         infanteria=false;
+%     end
+% end
+
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     try
@@ -232,15 +234,15 @@ if infanteria
     a.LCOE=config(horaWin,3);
     %setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
     %Para graficar
-    setA=config;
-    plot3(setA(:,1),setA(:,2),setA(:,3),'k.','DisplayName','Equipos optimos')
-    hold on
-    grid
-    plot3(setA(horaWin,1),setA(horaWin,2),setA(horaWin,3),'r+','DisplayName','Equipo seleccionado')
-    title('Nube de puntos')
-    xlabel('Modulos');
-    ylabel('Turbinas')
-    zlabel('LCOE')
+    %setA=config;
+    %plot3(setA(:,1),setA(:,2),setA(:,3),'k.','DisplayName','Equipos optimos')
+    %hold on
+    %grid
+    %plot3(setA(horaWin,1),setA(horaWin,2),setA(horaWin,3),'r+','DisplayName','Equipo seleccionado')
+    %title('Nube de puntos')
+    %xlabel('Modulos');
+    %ylabel('Turbinas')
+    %zlabel('LCOE')
 
     printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
         structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
@@ -374,13 +376,14 @@ if infanteria
     %Aquií termina
     close (f);
     %Pregunta si quiere guardar los datos
-    inicialMessage=sprintf('Es recomendable guardar los datos\n¿Le gustaria guardar los datos?');
-    save_data=questdlg(inicialMessage,'Guardar','Sí','No','Sí');
-    if save_data=='Sí'
-        close all
-        fileName='todosLosDatos.mat';
-        save(fileName);
-    end
+    
+%     inicialMessage=sprintf('Es recomendable guardar los datos\n¿Le gustaria guardar los datos?');
+%     save_data=questdlg(inicialMessage,'Guardar','Sí','No','Sí');
+%     if save_data=='Sí'
+%         close all
+%         fileName='todosLosDatos.mat';
+%         save(fileName);
+%     end
 
 
     catch ME
