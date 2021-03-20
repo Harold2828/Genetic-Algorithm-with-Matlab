@@ -37,8 +37,8 @@ if infanteria
     %%
     %Especificaciones Algoritmo Genetico
     max_gen=200;
-    pos_min=5e-3;
-    number_equip=800;
+    pos_min=3e-2;
+    number_equip=200;
     cutting=round(number_equip*0.35/2);
     prob_mutation=0.01; %Dejar en 1%
     k_friends=round(number_equip.*0.35);
@@ -257,8 +257,16 @@ if infanteria
     keep_ans(:,2)=potencia_requerida;
     memoria_batterias_u=[];
     battery.maxEnergySelected=battery.valueSelected*battery.SOCMax;
+    maxDiesel= sum(energy_accumulator(:,2),1);
+    id=1;
     for hora=1:length(potencia_requerida)
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+        maxDiesel=maxDiesel-potenciaUsada.diesel;
+        if maxDiesel<=0
+            potenciaUsada.diesel=0;
+            id=id+1;
+        end
+        
         keep_ans(hora,[1,3:end])=[potenciaUsada.energiaGenerada,...
                                   potenciaUsada.panel,...
                                   potenciaUsada.turbina,...
@@ -328,9 +336,11 @@ if infanteria
         vPotenciasNew=keep_ans;
         diaName=repmat("Hora ",length(keep_ans),1)+string((1:length(keep_ans)))';
     end
+    %PELIGRO AQUÍ
     [producingEnergy,idx_producingEnergy]=sort(abs(vPotenciasNew(:,end)-max(vPotenciasNew(:,end-1))));
     valueSelected=vPotenciasNew(idx_producingEnergy(1),end);
     vPotenciasNew(:,end)=repmat(valueSelected,length(vPotenciasNew(:,end)),1);
+    %FIN PELIGRO
     variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
     tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
     disp(tabla_energias)
@@ -380,9 +390,9 @@ if infanteria
 %     inicialMessage=sprintf('Es recomendable guardar los datos\n¿Le gustaria guardar los datos?');
 %     save_data=questdlg(inicialMessage,'Guardar','Sí','No','Sí');
 %     if save_data=='Sí'
-%         close all
-%         fileName='todosLosDatos.mat';
-%         save(fileName);
+         close all
+         fileName='todosLosDatos.mat';
+         save(fileName);
 %     end
 
 
