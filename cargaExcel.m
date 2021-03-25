@@ -3,7 +3,8 @@ function [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida]=car
 fullYear=true; %<---
 fullC=["25","26"];
 if fullYear
-    auto=length(table2array(readtable("Entradas.xlsx","sheet","Eficiencia del modulo FV","range","A:A")));
+    cantidad_datos=table2array(readtable("Entradas.xlsx","sheet","RecursoRenovable","range","A:A")); 
+    auto=length(cantidad_datos(~isnan(cantidad_datos)));
     fullC=[string(auto+1),string(auto+2)];
 end
 ro=@(temperatura,h)(354.049./temperatura.*exp(-0.034.*h./temperatura));

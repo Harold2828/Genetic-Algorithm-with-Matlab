@@ -390,9 +390,9 @@ if infanteria
 %     inicialMessage=sprintf('Es recomendable guardar los datos\n¿Le gustaria guardar los datos?');
 %     save_data=questdlg(inicialMessage,'Guardar','Sí','No','Sí');
 %     if save_data=='Sí'
-         close all
-         fileName='todosLosDatos.mat';
-         save(fileName);
+%         close all
+%         fileName='todosLosDatos.mat';
+%         save(fileName);
 %     end
 
 
