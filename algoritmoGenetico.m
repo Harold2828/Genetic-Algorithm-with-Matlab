@@ -36,9 +36,10 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=200;
-    pos_min=3e-2;
-    number_equip=200;
+    max_gen=200;        %Modificar estos valores para que sea más rapida la solución
+    number_equip=250;
+    pos_min=3e-3;       %Modificar este valor para que se más suave la grafica
+    
     cutting=round(number_equip*0.35/2);
     prob_mutation=0.01; %Dejar en 1%
     k_friends=round(number_equip.*0.35);
@@ -108,8 +109,6 @@ if infanteria
             messageWaitbar=sprintf('El programa está optimizando\nEl tiempo de espera estimado es %d %s',char(timeUsed),message2);
             waitbar(hora/length(potencia_requerida),f,messageWaitbar);
         end
-
-
         generacion=1;
         memoria_lcoe=zeros(1,1);
         memoria_equipos=zeros(1,2);
@@ -128,6 +127,12 @@ if infanteria
                 turbina.cantidad=helpRandi(number_equip,0,mT(hora));
                 turbina.cantidad(end)=0; 
             end
+            maxiCantidadT=ceil((areaL-panel.cantidad*panel.area)/(turbina.areaOcupada));
+            maxiCantidadT(maxiCantidadT<0)=0;
+            for i=1:length(turbina.cantidad)
+                turbina.cantidad(i)=helpRandi(1,0,maxiCantidadT(i));
+            end
+            turbina.cantidad(end)=0;
             battery.SOCi=memory_SOCi;
             battery.SOCL=memory_SOCL;
             [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
@@ -310,10 +315,12 @@ if infanteria
     %vPotencias=[pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1).*10^-3,...
     %    pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2).*10^-3,...
     %    energy_accumulator(:,1:2),potencia_requerida];
-
     try
+        assert(length(keep_ans)/24>1);
+        packData=zeros(length(keep_ans)/24,1);
         i=1;
         while true
+            
             pack1=24*(i-1);
             if pack1==0
                 pack1=1;
@@ -322,7 +329,6 @@ if infanteria
             pack2=24*i;
             if i<=(length(keep_ans)/24)
                 vPotenciasNew=[vPotenciasNew;sum(keep_ans(pack1:pack2,:),1)];
-
                 i=i+1;
             else
                 i=i-1;
@@ -344,19 +350,32 @@ if infanteria
     variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
     tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
     disp(tabla_energias)
-
-    %La grafica de las líneas
+    %Para la tabla de energías
+    total=true; %Si quiere todas las graficas o solo una 
     figure('Name','Tabla de validación de la herramienta');
     title('Validación de la herramienta');
-    hold on
-    plot(tabla_energias.EnergiaRequerida,'b-o','DisplayName','EnergiaRequerida');
-    plot(tabla_energias.EnergiaGenerada,'r-o','MarkerFaceColor','r','DisplayName','EnergiaGenerada');
+    if ~total
+        variablesNameUse=variablesName([end-1,end]);
+    else
+        variablesNameUse=variablesName;
+    end
+    j=1;
+    
+    formas=["-o","-s"];
+    for name = variablesNameUse
+        p=randi(length(formas),1);
+        color='rgbkcmy';
+        plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
+            'MarkerEdgeColor','k','DisplayName',string(name));
+        j=j+1;
+        hold on
+    end
+    clear j
     grid;
     legend();
     xlabel('Día');
     ylabel('Energía kWh');
-
-
+    %Final grafica de las línas
     [x_rango,~]=size(rangos);
     diasMuestra=zeros(x_rango,2);
     diaName=string(zeros(x_rango,1));
@@ -400,7 +419,7 @@ if infanteria
         close(f);
 
         messageError=sprintf("Ha ocurrido un error\n %s",ME.message);
-        f=errordlg(messageError,'Error');
+        errordlg(messageError,'Error');
     end
 end
 end
