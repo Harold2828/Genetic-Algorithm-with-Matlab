@@ -37,11 +37,11 @@ if infanteria
     %%
     %Especificaciones Algoritmo Genetico
     max_gen=200;        %Modificar estos valores para que sea más rapida la solución
-    number_equip=250;
-    pos_min=3e-3;       %Modificar este valor para que se más suave la grafica
+    number_equip=100;
+    pos_min=8.5e-2;       %Modificar este valor para que se más suave la grafica
     
     cutting=round(number_equip*0.35/2);
-    prob_mutation=0.01; %Dejar en 1%
+    prob_mutation=0.001; %Dejar en 1%
     k_friends=round(number_equip.*0.35);
     ver_24=false;
     trp=false;
@@ -262,20 +262,29 @@ if infanteria
     keep_ans(:,2)=potencia_requerida;
     memoria_batterias_u=[];
     battery.maxEnergySelected=battery.valueSelected*battery.SOCMax;
-    maxDiesel= sum(energy_accumulator(:,2),1);
+    maxDiesel= sum(energy_accumulator(:,2),1)*1.5;
+    %Nota: El diesel al ser dimensionado con los optimos hora a hora,
+    %entonces va consumir menos energía en su dimensionamiento inicial, por
+    %lo tando va a necesitar más energía ahora que está trabajando con una
+    %configuración estatica.
     id=1;
     for hora=1:length(potencia_requerida)
+        memory_SOCi=battery.SOCi;
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+        battery.SOCi=memory_SOCi;
         maxDiesel=maxDiesel-potenciaUsada.diesel;
         if maxDiesel<=0
             potenciaUsada.diesel=0;
             id=id+1;
         end
         
-        keep_ans(hora,[1,3:end])=[potenciaUsada.energiaGenerada,...
+        potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
+        
+        potenciaGenerada=potenciaRenovable+potenciaUsada.diesel;
+        keep_ans(hora,[1,3:end])=[potenciaGenerada,...
                                   potenciaUsada.panel,...
                                   potenciaUsada.turbina,...
-                                  battery.SOCL(hora),...
+                                  battery.SOCi,...
                                   potenciaUsada.diesel];
         if battery.SOCi>battery.maxEnergySelected
             battery.SOCi=battery.maxEnergySelected;
@@ -343,9 +352,9 @@ if infanteria
         diaName=repmat("Hora ",length(keep_ans),1)+string((1:length(keep_ans)))';
     end
     %PELIGRO AQUÍ
-    [producingEnergy,idx_producingEnergy]=sort(abs(vPotenciasNew(:,end)-max(vPotenciasNew(:,end-1))));
-    valueSelected=vPotenciasNew(idx_producingEnergy(1),end);
-    vPotenciasNew(:,end)=repmat(valueSelected,length(vPotenciasNew(:,end)),1);
+%     [producingEnergy,idx_producingEnergy]=sort(abs(vPotenciasNew(:,end)-max(vPotenciasNew(:,end-1))));
+%     valueSelected=vPotenciasNew(idx_producingEnergy(1),end);
+%     vPotenciasNew(:,end)=repmat(valueSelected,length(vPotenciasNew(:,end)),1);
     %FIN PELIGRO
     variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
     tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
@@ -371,7 +380,7 @@ if infanteria
         hold on
     end
     clear j
-    grid;
+    grid minor ;
     legend();
     xlabel('Día');
     ylabel('Energía kWh');
