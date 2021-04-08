@@ -38,10 +38,9 @@ if infanteria
     %Especificaciones Algoritmo Genetico
     max_gen=200;        %Modificar estos valores para que sea más rapida la solución
     number_equip=100;
-    pos_min=8.5e-4;       %Modificar este valor para que se más suave la grafica
-    
+    pos_min=8.5e-2;       %Modificar este valor para que se más suave la grafica
     cutting=round(number_equip*0.35/2);
-    prob_mutation=0.001; %Dejar en 1%
+    prob_mutation=1/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
     k_friends=round(number_equip.*0.35);
     ver_24=false;
     trp=false;
@@ -290,18 +289,24 @@ if infanteria
             battery.SOCi=battery.maxEnergySelected;
         end
     end
-
-     keep_ansTable=array2table(keep_ans(:,1:2),'VariableNames',{'EnergiaGenerada','EnergiaRequerida'});
+     variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
+     keep_ansTable=array2table([keep_ans(:,3:end),keep_ans(:,1),keep_ans(:,end)],'VariableNames',variablesName);
      %disp(keep_ansTable); %La tabla de generación de energia con la config. seleccionada
      keep_ans=keep_ans(:,[3:end,2,1]);
     %%
     %Cambiar desde aquí MIRAR
     disp(sum(energy_accumulator(:,1)))
     pie_chat_IM=figure ('Name','Diagrama de distribución energetica');
-    pPused=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1));
-    pTUsed=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*config(:,2));
-    pAcumUsed=sum(energy_accumulator(:,2),1)*10^3;
-    bAcumUsed=sum(energy_accumulator(:,1),1)*10^3;
+    if true
+        pPused=a.Modulo*panel.potencia;
+        pTUsed=a.Turbina*turbina.potencia;
+        pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3;
+    else
+        pPused=sum(keep_ansTable.('EnergiaModulo'));
+        pTUsed=sum(keep_ansTable.('EnergiaTurbina'));
+        pAcumUsed=sum(keep_ansTable.('EnergiaMotor'));
+        bAcumUsed=sum(energy_accumulator(:,1),1)*10^3;
+    end
     if true
         vectorPotencias=[pPused;pTUsed;pAcumUsed];
         labelsPorcentajes={'Modulos PV ','Turbinas eolicas ','Generador(es) Diesel '}';
@@ -358,7 +363,6 @@ if infanteria
 %     valueSelected=vPotenciasNew(idx_producingEnergy(1),end);
 %     vPotenciasNew(:,end)=repmat(valueSelected,length(vPotenciasNew(:,end)),1);
     %FIN PELIGRO
-    variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
     tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
     disp(tabla_energias)
     %Para la tabla de energías
