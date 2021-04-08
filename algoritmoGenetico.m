@@ -295,6 +295,7 @@ if infanteria
      %disp(keep_ansTable); %La tabla de generación de energia con la config. seleccionada
      keep_ans=keep_ans(:,[3:end,2,1]);
     %%
+    %Cambiar desde aquí MIRAR
     disp(sum(energy_accumulator(:,1)))
     pie_chat_IM=figure ('Name','Diagrama de distribución energetica');
     pPused=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1));
@@ -319,6 +320,7 @@ if infanteria
     for i=1:length(labelsPorcentajes)
      pText(i).String=combinedtxt(i);
     end
+    %Cambiar hasta aquí MIRAR
     %%
 
     %vPotencias=[pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*config(:,1).*10^-3,...
