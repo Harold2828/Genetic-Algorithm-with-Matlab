@@ -269,9 +269,9 @@ if infanteria
     %configuración estatica.
     id=1;
     for hora=1:length(potencia_requerida)
-        memory_SOCi=battery.SOCi;
-        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
         battery.SOCi=memory_SOCi;
+        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+        memory_SOCi=battery.SOCi;
         maxDiesel=maxDiesel-potenciaUsada.diesel;
         if maxDiesel<=0
             potenciaUsada.diesel=0;
