@@ -37,10 +37,10 @@ if infanteria
     %%
     %Especificaciones Algoritmo Genetico
     max_gen=200;        %Modificar estos valores para que sea más rapida la solución
-    number_equip=100;
-    pos_min=8.5e-1;       %Modificar este valor para que se más suave la grafica
+    number_equip=80;
+    pos_min=8.5e-3;       %Modificar este valor para que se más suave la grafica
     cutting=round(number_equip*0.35/2);
-    prob_mutation=1/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
+    prob_mutation=2/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
     k_friends=round(number_equip.*0.35);
     ver_24=false;
     trp=false;
