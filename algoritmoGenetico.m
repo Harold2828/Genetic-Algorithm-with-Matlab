@@ -13,7 +13,7 @@ infanteria=true;
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     try
-    rng(1);
+    rng(1,'philox');
 
     %Ecuaciones
     % maxPanel=@(eficiencia,areaLibre,irradiancia,potenciaPanel)...
@@ -36,12 +36,12 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=200;        %Modificar estos valores para que sea más rapida la solución
-    number_equip=80;
-    pos_min=8.5e-3;       %Modificar este valor para que se más suave la grafica
-    cutting=round(number_equip*0.35/2);
-    prob_mutation=2/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
-    k_friends=round(number_equip.*0.35);
+    max_gen=500;        %Modificar estos valores para que sea más rapida la solución
+    number_equip=200;
+    pos_min=8.5e-4;       %Modificar este valor para que se más suave la grafica
+    cutting=round(number_equip*0.3/2);
+    prob_mutation=1/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
+    k_friends=round(number_equip.*1);
     ver_24=false;
     trp=false;
     fast_mode=true;
@@ -87,6 +87,7 @@ if infanteria
     valorDiesel=7*10^3 ;%kW
     for hora=1:length(potencia_requerida)
         tic;
+
         if hora ==1
 
             waitbar(hora/length(potencia_requerida),f,'El programa está optimizando');
@@ -150,13 +151,13 @@ if infanteria
                     end
                     potenciaSuplida(hora)=mean(potenciaUsada.energiaGenerada);
                     %memory_SOCi=ones(number_equip,1).*mean(battery.SOCi(~isoutlier(battery.SOCi)));
-                    memory_SOCi=battery.SOCi;
+                    %memory_SOCi=battery.SOCi;
+                    memory_SOCi=repmat(mean(battery.SOCi),length(battery.SOCi),1);
                     %mem_SOCLH=ones(number_equip,1).*mean(battery.SOCL(~isoutlier(battery.SOCL(:,hora)),hora));
                     cargaPromedioBaterias(hora)=mean(memory_SOCi);
                     %memory_SOCL(:,hora)=mem_SOCLH;
-
-                    memory_SOCL(:,hora)=battery.SOCL(:,hora);
-
+                    %memory_SOCL(:,hora)=battery.SOCL(:,hora);
+                    memory_SOCL(:,hora)=repmat(mean(battery.SOCL(:,hora)),length(battery.SOCL(:,hora)),1);
                     config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
                     energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
                     %Incluyendo diesel 100%
@@ -268,6 +269,7 @@ if infanteria
     %configuración estatica.
     id=1;
     for hora=1:length(potencia_requerida)
+
         battery.SOCi=memory_SOCi;
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
         memory_SOCi=battery.SOCi;
@@ -318,6 +320,9 @@ if infanteria
     porcentajes=vectorPotencias/sum(vectorPotencias);
     %%
     pie_porcentajes=pie(porcentajes);
+    colormap ([1,1,0;
+               0,0,1;
+               0,1,0;])
     pText = findobj(pie_porcentajes,'Type','text');
     percentValues = get(pText,'String'); 
 
