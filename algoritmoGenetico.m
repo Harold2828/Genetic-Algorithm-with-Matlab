@@ -84,7 +84,7 @@ if infanteria
     config=energy_accumulator;
     structure_memory=struct();
     distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potencia_requerida)*0.001)+1));
-    valorDiesel=7*10^3 ;%kW
+    valorDiesel=12*10^3 ;%kW
     for hora=1:length(potencia_requerida)
         tic;
 
