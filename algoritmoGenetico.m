@@ -87,7 +87,6 @@ if infanteria
     valorDiesel=12*10^3 ;%kW
     for hora=1:length(potencia_requerida)
         tic;
-
         if hora ==1
 
             waitbar(hora/length(potencia_requerida),f,'El programa está optimizando');
@@ -225,6 +224,7 @@ if infanteria
             end
             a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(sum(energy_accumulator(:,2),1)./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
             battery.valueSelected=ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax);
+            disp(ceil(sum(energy_accumulator(:,2),1)));
         case true
             a=[config(hora_ver,:),...
                 ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
