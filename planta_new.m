@@ -85,6 +85,7 @@ for i=1:4
     lco_temporal(:,i)=IM;
 end
 lco.total=sum(lco_temporal,2)./energia_generada;
+lco.total(isnan(lco.total))=0;
 potencia.energiaGenerada=energia_generada;
 try
     round_please=1;

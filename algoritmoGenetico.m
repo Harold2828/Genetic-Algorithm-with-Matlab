@@ -36,12 +36,12 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=500;        %Modificar estos valores para que sea más rapida la solución
-    number_equip=200;
-    pos_min=8.5e-4;       %Modificar este valor para que se más suave la grafica
-    cutting=round(number_equip*0.3/2);
-    prob_mutation=1/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
-    k_friends=round(number_equip.*1);
+    max_gen=600;        %Modificar estos valores para que sea más rapida la solución
+    number_equip=20;
+    pos_min=9e-3;       %Modificar este valor para que se más suave la grafica
+    cutting=round(number_equip*0.4/2);
+    prob_mutation=0.5/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
+    k_friends=round(number_equip.*0.3);
     ver_24=false;
     trp=false;
     fast_mode=true;
@@ -62,10 +62,10 @@ if infanteria
     memory_SOCi=zeros(number_equip,1);
     memory_SOCL=zeros(number_equip,length(potencia_requerida));
     cargaPromedioBaterias=zeros(length(potencia_requerida),1);
-    pot_tubina_1=pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*10^-3;
-    pot_panel_1=pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*10^-3;
-    potencia_sePuedeGenerar=pot_tubina_1+pot_panel_1;
-    potencia_requerida(potencia_requerida<=0)=potencia_sePuedeGenerar(potencia_requerida<=0);
+    %pot_tubina_1=pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento).*10^-3;
+    %pot_panel_1=pot_panel(clima.irradiancia,panel.area,panel.eficiencia).*10^-3;
+    %potencia_sePuedeGenerar=pot_tubina_1+pot_panel_1;
+    %potencia_requerida(potencia_requerida<=0)=potencia_sePuedeGenerar(potencia_requerida<=0);
     %Cantidades maximas
     mP=maxPanel(potencia_requerida,clima.irradiancia,panel.area,panel.eficiencia);
     max_panel_area=ceil(areaL/panel.area);
