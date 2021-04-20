@@ -300,9 +300,9 @@ if infanteria
     disp(sum(energy_accumulator(:,1)))
     pie_chat_IM=figure ('Name','Diagrama de distribución energetica');
     if true
-        pPused=a.Modulo*panel.potencia;
+        pPused=a.Modulo*panel.potencia+sum(energy_accumulator(:,1),1)*10^3;;
         pTUsed=a.Turbina*turbina.potencia;
-        pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3;
+        pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3:
     else
         pPused=sum(keep_ansTable.('EnergiaModulo'));
         pTUsed=sum(keep_ansTable.('EnergiaTurbina'));
