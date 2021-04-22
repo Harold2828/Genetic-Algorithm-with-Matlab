@@ -300,9 +300,9 @@ if infanteria
     disp(sum(energy_accumulator(:,1)))
     pie_chat_IM=figure ('Name','Diagrama de distribución energetica');
     if true
-        pPused=a.Modulo*panel.potencia+sum(energy_accumulator(:,1),1)*10^3;;
+        pPused=a.Modulo*panel.potencia;
         pTUsed=a.Turbina*turbina.potencia;
-        pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3:
+        pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3 ;
     else
         pPused=sum(keep_ansTable.('EnergiaModulo'));
         pTUsed=sum(keep_ansTable.('EnergiaTurbina'));
@@ -382,9 +382,9 @@ if infanteria
     j=1;
     
     formas=["-o","-s"];
-    for name = variablesNameUse
+    for name = variablesNameUse(1:end-2)
         p=randi(length(formas),1);
-        color='rgbkcmy';
+        color='bkcmy';
         plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
             'MarkerEdgeColor','k','DisplayName',string(name));
         j=j+1;
@@ -396,6 +396,24 @@ if infanteria
     xlabel('Día');
     ylabel('Energía kWh');
     %Final grafica de las línas
+    j=1;
+        formas=["-o","-s"];
+    
+        for name = variablesNameUse(end-1:end)
+        p=randi(length(formas),1);
+        color='rb';
+        plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
+            'MarkerEdgeColor','k','DisplayName',string(name));
+        j=j+1;
+        hold on
+    end
+    clear j
+    grid minor ;
+    legend();
+    xlabel('Día');
+    ylabel('Energía kWh');
+    %
+    
     [x_rango,~]=size(rangos);
     diasMuestra=zeros(x_rango,2);
     diaName=string(zeros(x_rango,1));
