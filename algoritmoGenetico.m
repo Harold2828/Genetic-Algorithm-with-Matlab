@@ -372,7 +372,8 @@ if infanteria
     disp(tabla_energias)
     %Para la tabla de energías
     total=true; %Si quiere todas las graficas o solo una 
-    figure('Name','Tabla de validación de la herramienta');
+    
+    figure('Name','Tabla de validación de la herramienta 1');
     title('Validación de la herramienta');
     if ~total
         variablesNameUse=variablesName([end-1,end]);
@@ -396,6 +397,8 @@ if infanteria
     xlabel('Día');
     ylabel('Energía kWh');
     %Final grafica de las línas
+    figure('Name','Tabla de validación de la herramienta 1');
+    title('Validación de la herramienta');
     j=1;
         formas=["-o","-s"];
     
