@@ -12,7 +12,7 @@ infanteria=true;
 
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
-    try
+    
     rng(1,'philox');
 
     %Ecuaciones
@@ -36,11 +36,13 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
+    % 600
     max_gen=600;        %Modificar estos valores para que sea más rapida la solución
     number_equip=20;
-    pos_min=8.5e-2;       %Modificar este valor para que se más suave la grafica
+    %8.5e-6
+    pos_min=8.5e-4;       %Modificar este valor para que se más suave la grafica
     cutting=round(number_equip*0.4/2);
-    prob_mutation=0.5/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
+    prob_mutation=1/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
     k_friends=round(number_equip.*0.3);
     ver_24=false;
     trp=false;
@@ -222,21 +224,25 @@ if infanteria
             else
                 paneles_cantidad=mean(config(config(:,1)>0,1));
             end
-            a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(sum(energy_accumulator(:,2),1)./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
+            a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(max(energy_accumulator(:,2))./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
             battery.valueSelected=ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax);
             disp(ceil(sum(energy_accumulator(:,2),1)));
         case true
             a=[config(hora_ver,:),...
                 ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
     end
+
     a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Numero motores diesel','Horas diesel activo','IteracionMediana'});
     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
     setA=normalize(config);
     distancesset=pdist2(setM,setA);
     [~,horaWin]=min(distancesset);
-    a.Modulo=ceil(config(horaWin,1));
-    a.Turbina=ceil(config(horaWin,2));
-    a.LCOE=config(horaWin,3);
+    %Para disminuir tiene que escribir la cantidad a la derecha de las
+    %variables que llamen a la variable a
+    %No recomendado hacerlo
+    a.Modulo=ceil(config(horaWin,1)+0;
+    a.Turbina=ceil(config(horaWin,2))+0;
+    a.LCOE=config(horaWin,3)+0;
     %setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
     %Para graficar
     %setA=config;
@@ -300,13 +306,16 @@ if infanteria
     disp(sum(energy_accumulator(:,1)))
     pie_chat_IM=figure ('Name','Diagrama de distribución energetica');
     if true
-        pPused=a.Modulo*panel.potencia;
+        pPused=a.Modulo*panel.potencia ; 
         pTUsed=a.Turbina*turbina.potencia;
-        pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3 ;
+        pAcumUsed=max(keep_ansTable.('EnergiaMotor'));
+        disp("La energía del motor es:");
+        disp(pAcumUsed);
+%       pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3
     else
-        pPused=sum(keep_ansTable.('EnergiaModulo'));
+        pPused=sum(keep_ansTable.('EnergiaModulo');
         pTUsed=sum(keep_ansTable.('EnergiaTurbina'));
-        pAcumUsed=sum(keep_ansTable.('EnergiaMotor'));
+        pAcumUsed=max(keep_ansTable.('EnergiaMotor'));
         bAcumUsed=sum(energy_accumulator(:,1),1)*10^3;
     end
     if true
@@ -317,7 +326,7 @@ if infanteria
         labelsPorcentajes={'Modulos PV ','Turbinas eolicas ','Generador(es) Diesel ','Baterias'}';
     end
 
-    porcentajes=vectorPotencias/sum(vectorPotencias);
+    porcentajes=round(round(vectorPotencias,2)/sum(round(vectorPotencias,2)),2);
     %%
     pie_porcentajes=pie(porcentajes);
     colormap ([1,1,0;
@@ -385,7 +394,7 @@ if infanteria
     formas=["-o","-s"];
     for name = variablesNameUse(1:end-2)
         p=randi(length(formas),1);
-        color='bkcmy';
+        color='ycbg';
         plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
             'MarkerEdgeColor','k','DisplayName',string(name));
         j=j+1;
@@ -401,8 +410,7 @@ if infanteria
     title('Validación de la herramienta');
     j=1;
         formas=["-o","-s"];
-    
-        for name = variablesNameUse(end-1:end)
+    for name = variablesNameUse(end-1:end)
         p=randi(length(formas),1);
         color='rb';
         plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
@@ -434,7 +442,7 @@ if infanteria
     end
 
 
-
+    try
     %%
     %para las tablas
     tiempo=1;
@@ -488,6 +496,9 @@ for dim=1:deep
     for child=1:k_child
         site=engagement(:,child);
         puntuation=results(unique(site));
+        if length(puntuation)==1
+            puntuation=results(site);
+        end
         [~,idx_puntuation]=sort(puntuation);
         parents=idx_puntuation(1:2);
         armada=genetic(parents,:,dim);
