@@ -240,9 +240,9 @@ if infanteria
     %Para disminuir tiene que escribir la cantidad a la derecha de las
     %variables que llamen a la variable a
     %No recomendado hacerlo
-    a.Modulo=ceil(config(horaWin,1)+0;
-    a.Turbina=ceil(config(horaWin,2))+0;
-    a.LCOE=config(horaWin,3)+0;
+    a.Modulo=ceil(config(horaWin,1));
+    a.Turbina=ceil(config(horaWin,2));
+    a.LCOE=config(horaWin,3);
     %setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
     %Para graficar
     %setA=config;
@@ -313,7 +313,7 @@ if infanteria
         disp(pAcumUsed);
 %       pAcumUsed=a.('Numero motores diesel')*valorDiesel*10^-3
     else
-        pPused=sum(keep_ansTable.('EnergiaModulo');
+        pPused=sum(keep_ansTable.('EnergiaModulo'));
         pTUsed=sum(keep_ansTable.('EnergiaTurbina'));
         pAcumUsed=max(keep_ansTable.('EnergiaMotor'));
         bAcumUsed=sum(energy_accumulator(:,1),1)*10^3;
