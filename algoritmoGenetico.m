@@ -1,15 +1,6 @@
 function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,~,areaLibre)
 infanteria=true;
 
-% if exist('todosLosDatos.mat')==2
-%     inicialMessage=sprintf('Existen datos guardados previamente\n¿Desea cargalos?');
-%     load_data=questdlg(inicialMessage,'Guardar','Sí','No','Sí');
-%     if load_data=='Sí'
-%         load('todosLosDatos.mat');
-%         infanteria=false;
-%     end
-% end
-
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     
