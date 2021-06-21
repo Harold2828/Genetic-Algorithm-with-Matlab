@@ -18,7 +18,7 @@ if infanteria
     %%
     %Especificaciones Algoritmo Genetico
     max_gen=600;        
-    number_equip=20;
+    number_equip=200;
     pos_min=8.5e-4;       
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100;  
@@ -92,7 +92,7 @@ if infanteria
         end
 
         while true
-            %%
+            %% Iteraciónes
             if generacion==1
                 panel.cantidad=helpRandi(number_equip,0,mP(hora));
                 panel.cantidad(end)=0;
@@ -381,6 +381,7 @@ if infanteria
         errordlg(messageError,'Error');
     end
 end
+%Cruce y mutación
 end
 function [generacionNew]=reproduccion(genetic,results,k_friends,k_child)
 [row,col,deep]=size(genetic);
