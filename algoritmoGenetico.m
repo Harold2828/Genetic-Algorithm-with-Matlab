@@ -27,7 +27,7 @@ if infanteria
     trp=false;
     fast_mode=true;
     %%
-    [~,inverter,panel,turbina,battery,lco,clima,~]=cargaExcel();
+    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,moduloDiesel]=cargaExcel();
     potencia_requerida=curva_de_carga;
     clima.altura=turbina.alturaReferencia;
     h_ref=turbina.alturaReferencia;
@@ -59,7 +59,7 @@ if infanteria
     config=energy_accumulator;
     structure_memory=struct();
     distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potencia_requerida)*0.001)+1));
-    valorDiesel=12*10^3 ;
+    valorDiesel=diesel.potencia ;
     for hora=1:length(potencia_requerida)
         tic;
         if hora ==1
