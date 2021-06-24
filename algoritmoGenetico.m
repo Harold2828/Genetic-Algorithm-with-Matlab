@@ -468,6 +468,7 @@ function [pT]=specialTurbine(clima,turbina)
     v=clima.velViento(logical(c1.*c2));
     pT(logical(c1.*c2))=v.^3 .*(turbina.potencia./(turbina.velocidadNominal.^3-turbina.velocidadArranque.^3))-turbina.potencia.*(turbina.velocidadArranque.^3./(turbina.velocidadNominal.^3-turbina.velocidadArranque.^3));
     pT(logical(~c2.*c3))=turbina.potencia;
+    pT=pT.*turbina.eficiencia;
     return;
 end
 
