@@ -4,16 +4,14 @@ infanteria=true;
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     
-    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,moduloDiesel]=cargaExcel();
-    
     rng(1,'philox');
 
     pot_panel=@(irradiancia,area,eficiencia_panel)(irradiancia.*eficiencia_panel.*area);
     maxPanel=@(potencia_requerida,irradiancia,area,eficiencia_panel)(ceil(potencia_requerida./(pot_panel(irradiancia,area,eficiencia_panel).*10^-3)));
-    %pot_turbina=@(d_aire,area_barrido,eficiencia_turbina,vel_viento)(1/2.*d_aire.*area_barrido.*eficiencia_turbina.*vel_viento.^3);     
-    pot_turbina=specialTurbine(clima,turbina);
+    pot_turbina=@(d_aire,area_barrido,eficiencia_turbina,vel_viento)(1/2.*d_aire.*area_barrido.*eficiencia_turbina.*vel_viento.^3);     
+
     maxTurbina=@(potenciaNecesaria,d_aire,area_barrido,eficiencia_turbina,vel_viento)...
-         (ceil(potenciaNecesaria./(pot_turbina(clima,turbina).*10^-3)));
+         (ceil(potenciaNecesaria./(pot_turbina(d_aire,area_barrido,eficiencia_turbina,vel_viento).*10^-3)));
     rangos=[1129,1152;2113,2137;5953,5976;7369,7391]; 
     helpRandi=@(cantidadEquipo,minEquip,maxEquip)(randi([minEquip,maxEquip],cantidadEquipo,1));
     pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
@@ -30,7 +28,7 @@ if infanteria
     trp=false;
     fast_mode=true;
     %%
-    
+    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,moduloDiesel]=cargaExcel();
     potencia_requerida=curva_de_carga;
     clima.altura=turbina.alturaReferencia;
     h_ref=turbina.alturaReferencia;
@@ -460,14 +458,7 @@ for dim=1:deep
 end
 zerg=genetic;
 end
-function [pT]=specialTurbine(clima,turbina)
-    pT=clima.velViento*0;
-    c1=turbina.velocidadArranque<=clima.velViento;
-    c2=turbina.velocidadNominal>clima.velViento ;
-    c3=clima.velViento<=turbina.velocidadMaxima ;
-    v=clima.velViento(logical(c1.*c2));
-    pT(logical(c1.*c2))=v.^3 .*(turbina.potencia./(turbina.velocidadNominal.^3-turbina.velocidadArranque.^3))-turbina.potencia.*(turbina.velocidadArranque.^3./(turbina.velocidadNominal.^3-turbina.velocidadArranque.^3));
-    pT(logical(~c2.*c3))=turbina.potencia;
-    return;
+function specialTurbine(clima,turbina)
+    k1=turbina.velocidadArranque<=clima.velViento.*turbina.ve
 end
 
