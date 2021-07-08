@@ -39,6 +39,7 @@ for i=1:nRangos
             turbina.velocidadMaxima=reclamar_matrix(5);
             turbina.areaBarrido=reclamar_matrix(6);
             clima.densidadAire=reclamar_matrix(7);
+            clima.densidad=reclamar_matrix(7);
             turbina.alturaReferencia=reclamar_matrix(8);
             turbina.alturaUsada=reclamar_matrix(9);
             turbina.alpha=reclamar_matrix(10);

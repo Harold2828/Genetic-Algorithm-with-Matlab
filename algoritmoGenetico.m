@@ -13,15 +13,17 @@ if infanteria
     %pot_turbina=@(d_aire,area_barrido,eficiencia_turbina,vel_viento)(1/2.*d_aire.*area_barrido.*eficiencia_turbina.*vel_viento.^3);     
     pot_turbina=specialTurbine(clima,turbina);
     maxTurbina=@(potenciaNecesaria,d_aire,area_barrido,eficiencia_turbina,vel_viento)...
-         (ceil(potenciaNecesaria./(pot_turbina(clima,turbina).*10^-3)));
+         (ceil(potenciaNecesaria./(pot_turbina.*10^-3)));
     rangos=[1129,1152;2113,2137;5953,5976;7369,7391]; 
     helpRandi=@(cantidadEquipo,minEquip,maxEquip)(randi([minEquip,maxEquip],cantidadEquipo,1));
     pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=600;        
-    number_equip=200;
+    %600
+    max_gen=20;  
+    %200
+    number_equip=50;
     pos_min=8.5e-4;       
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100;  
@@ -372,14 +374,14 @@ if infanteria
     %%
     tiempo=1;
     panel.energiaTiempo=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia)).*a.Modulo.*tiempo.*10^-3+sum(energy_accumulator(:,1)); %kWh/mes
-    turbina.energiaTiempo=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento)).*a.Turbina.*tiempo.*10^-3;
+    turbina.energiaTiempo=sum(pot_turbina).*a.Turbina.*tiempo.*10^-3;
+    %turbina.energiaTiempo=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento)).*a.Turbina.*tiempo.*10^-3;
     dieselU.energiaTiempo=pAcumUsed(:,1).*10^-3.*tiempo;
     t10=table(panel.energiaTiempo,turbina.energiaTiempo,dieselU.energiaTiempo,'VariableNames',{'PVkWhmonth','WindkWhmonth','dieselkWhmonth'});
     close (f);
 
     catch ME
         close(f);
-
         messageError=sprintf("Ha ocurrido un error\n %s",ME.message);
         errordlg(messageError,'Error');
     end
