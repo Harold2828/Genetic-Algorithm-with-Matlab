@@ -22,7 +22,7 @@ for i=1:nRangos
     switch i
         case 1
             areaL=reclamar_matrix(1);
-            inverter.eficiencia=reclamar_matrix(2)./100;
+            inverter.eficiencia=reclamar_matrix(2);
             clima.altura=reclamar_matrix(3);
         case 2
             panel.potencia=reclamar_matrix(1);
@@ -33,7 +33,7 @@ for i=1:nRangos
             panel.eficiencia=table2array(readtable("Entradas.xlsx",opts));
         case 3
             turbina.potencia=reclamar_matrix(1);
-            turbina.eficiencia=reclamar_matrix(2)./100;
+            turbina.eficiencia=reclamar_matrix(2);
             turbina.velocidadNominal=reclamar_matrix(3);
             turbina.velocidadArranque=reclamar_matrix(4);
             turbina.velocidadMaxima=reclamar_matrix(5);
@@ -45,7 +45,7 @@ for i=1:nRangos
             turbina.alpha=reclamar_matrix(10);
             turbina.areaOcupada=reclamar_matrix(11);
         case 4
-            battery.eficiencia=reclamar_matrix(1)./100;
+            battery.eficiencia=reclamar_matrix(1);
             battery.autoDescarga=reclamar_matrix(2);
             battery.SOCMax=reclamar_matrix(3);
             battery.SOCMin=reclamar_matrix(4);
