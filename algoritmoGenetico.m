@@ -5,11 +5,9 @@ if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     
     [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,moduloDiesel]=cargaExcel();
-    %Quitar comentario desde aquí
     battery.eficiencia=battery.eficiencia./100;
     turbina.eficiencia=turbina.eficiencia./100;
     inverter.eficiencia=inverter.eficiencia./100;
-    %Hasta aquí
     rng(1,'philox');
 
     pot_panel=@(irradiancia,area,eficiencia_panel)(irradiancia.*eficiencia_panel.*area);
@@ -25,7 +23,7 @@ if infanteria
     %%
     %Especificaciones Algoritmo Genetico
     %600
-    max_gen=20;  
+    max_gen=200;  
     %200
     number_equip=50;
     pos_min=8.5e-4;       
