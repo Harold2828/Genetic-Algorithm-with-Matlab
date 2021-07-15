@@ -22,8 +22,8 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=12;  
-    number_equip=30;
+    max_gen=20;  
+    number_equip=10;
     pos_min=8.5e-4;       
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100;  
