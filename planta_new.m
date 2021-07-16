@@ -72,7 +72,7 @@ turbina.lcoe=lcoe(turbina.aci,0.015,tur_gen,0);
 diesel_gen(energy)=NaN;
 diesel_gen=fillmissing(diesel_gen,'previous');
 diesel.inversion=inversion(diesel_gen./diesel.potencia,diesel.costo,0);
-diesel.acCom=(diesel_gen,diesel.eficiencia,diesel.hr,diesel.precioCombustible);
+diesel.acCom=acCom(diesel_gen,diesel.eficiencia,diesel.hr,diesel.precioCombustible);
 diesel.aci=aci(diesel.inversion,diesel.tasaInteres,diesel.vidaUtil);
 diesel.lcoe=lcoe(diesel.aci,0.02,diesel_gen,diesel.acCom);
 

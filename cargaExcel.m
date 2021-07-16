@@ -7,7 +7,7 @@ if fullYear
     fullC=[string(auto+1),string(auto+2)];
 end
 ro=@(temperatura,h)(354.049./temperatura.*exp(-0.034.*h./temperatura));
-rangos=["B2:B4";"B7:B9";"B12:B22";"B25:B32";"I3:I6";"B35:B35"]; 
+rangos=["B2:B4";"B7:B9";"B12:B22";"B25:B32";"I3:I6";"B35:B35";"M3:M6";"M8:M10";"M12:M14";"M16:M21"]; 
 nRangos=length(rangos); 
 exportar=struct("a",{});
 %%
@@ -60,6 +60,33 @@ for i=1:nRangos
             lco.diesel=reclamar_matrix(4);
         case 6
             diesel.potencia=reclamar_matrix(1);
+        case 7
+            %Para costo nivelado de la energía
+            panel.costo=reclamar_matrix(1);
+            panel.coym=reclamar_matrix(2);
+            inverter.costo=reclamar_matrix(3);
+            panel.vidaUtil=reclamar_matrix(4);
+            
+        case 8
+            %Para eolico
+            turbina.costo=reclamar_matrix(1);
+            turbina.coym=reclamar_matrix(2);
+            turbina.vidaUtil=reclamar_matrix(3);
+            
+        case 9
+            %Para Baterias
+            battery.costo=reclamar_matrix(1);
+            battery.coym=reclamar_matrix(2);
+            battery.vidaUtil=reclamar_matrix(3);
+        case 10
+            %Para generador diesel
+            diesel.costo=reclamar_matrix(1);
+            diesel.coym=reclamar_matrix(2);
+            diesel.vidaUtil=reclamar_matrix(3);
+            diesel.hr=reclamar_matrix(4);
+            diesel.precioCombustible=reclamar_matrix(5);
+            diesel.vidaUtil=reclamar_matrix(5);
+            diesel.valorSalvamento=reclamar_matrix(6);
     end
     
 end
