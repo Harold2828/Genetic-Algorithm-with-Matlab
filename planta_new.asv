@@ -46,18 +46,7 @@ diesel_gen(diesel_gen<0)=diesel_gen(diesel_gen<0).*0;
 energia_generada=renovable_gen+diesel_gen;
 
 %Para energía total igual a cero
-energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) );
-panel.cantidad(energy)=NaN;
-panel.cantidad=fillmissing(panel.cantidad,'previous');
-turbina.cantidad(energy)=NaN;
-turbina.cantidad=fillmissing(turbina.cantidad,'previous');
-pv_gen(energy)=NaN;
-pv_gen=fillmissing(pv_gen,'previous');
-tur_gen(energy)=NaN;
-tur_gen=fillmissing(tur_gen,'previous');
-diesel_gen(energy)=NaN;
-diesel_gen=fillmissing(diesel_gen,'previous');
-
+energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)==potenciaRequeria(hora) );
 %Fin para energía total igual a cero
 
 potencia.panel=pv_gen;
@@ -65,7 +54,7 @@ potencia.turbina=tur_gen;
 potencia.diesel=diesel_gen;
 potencias=[pv_gen,tur_gen,battery.SOCi,diesel_gen];
 
-%lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
+lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
 [col_p,~]=size(pv_gen);
 lco_temporal=zeros(col_p,4);
 for i=1:4
