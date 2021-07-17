@@ -21,7 +21,7 @@ turbina_run=turbina.cantidad;
 pv_gen=p_Panel(panel.eficiencia(hora),panel.area,clima.irradiancia(hora),panel_run);
 tur_gen=p_Turbina(turbina.eficiencia,clima.densidadAire(hora),clima.velViento(hora),turbina_run,turbina.areaBarrido);
 renovable_gen=sum([pv_gen,tur_gen],2);
-posGG=logical(renovable_gen+10==potenciaRequeria(hora));
+posGG=logical(renovable_gen>potenciaRequeria(hora));
 posUG=~posGG;
 %%
 if isempty(battery.SOCi(posGG))==0
@@ -52,7 +52,7 @@ energia_generada=renovable_gen+diesel_gen;
 
 %Para energía total igual a cero
 energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) ); %Está bien la formula?
-if(sum(energy)>0 && length(energy)>1)
+if(sum(energy)>0 && length(energy)>1 && false)
     panel.cantidad(energy)=NaN;
     panel.cantidad=round(fillmissing(panel.cantidad,'nearest'));
     pv_gen(energy)=NaN;
@@ -70,7 +70,7 @@ if(sum(energy)>0 && length(energy)>1)
     battery.SOCi=fillmissing(battery.SOCi,'nearest');
     
     battery.SOCL(energy,hora)=NaN;
-    battery.SOCL(:,hora)=round(fillmissing(battery.SOCL(:,hora),'movmedian',10));
+    battery.SOCL(:,hora)=round(fillmissing(battery.SOCL(:,hora),'nearest'));
 end
 
 panel.inversion=inversion(panel.cantidad,panel.costo,inverter.costo);
@@ -107,8 +107,8 @@ potencias=[pv_gen,tur_gen,battery.SOCi,diesel_gen];
 
 %Para calcular de nuevo los LCOE
 lco_temporal=[panel.lcoe,turbina.lcoe,diesel.lcoe,battery.lcoe];
-%valorMultiplicar=length(potenciaRequeria);
-valorMultiplicar=90;
+valorMultiplicar=length(potenciaRequeria);
+%valorMultiplicar=90;
 lco.total=sum(lco_temporal,2)./(energia_generada*valorMultiplicar);
 lco.total(isnan(lco.total))=0;
 lco.total(isinf(lco.total))=max(lco.total(~isinf(lco.total)));

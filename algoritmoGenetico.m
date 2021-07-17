@@ -9,7 +9,7 @@ if infanteria
     turbina.eficiencia=turbina.eficiencia./100;
     inverter.eficiencia=inverter.eficiencia./100;
     diesel.eficiencia=diesel.eficiencia/100;
-    rng(1,'philox');
+    rng(1);
 
     pot_panel=@(irradiancia,area,eficiencia_panel)(irradiancia.*eficiencia_panel.*area);
     maxPanel=@(potencia_requerida,irradiancia,area,eficiencia_panel)(ceil(potencia_requerida./(pot_panel(irradiancia,area,eficiencia_panel).*10^-3)));
@@ -23,12 +23,12 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=20;  
-    number_equip=10;
-    pos_min=8.5e-4;       
-    cutting=round(number_equip*0.4/2);
+    max_gen=100;  
+    number_equip=20;
+    pos_min=8.5e-5;       
+    cutting=round(number_equip*0.5/2);
     prob_mutation=1/100;  
-    k_friends=round(number_equip.*0.3);
+    k_friends=round(number_equip.*0.35);
     ver_24=false;
     trp=false;
     fast_mode=true;
@@ -69,7 +69,6 @@ if infanteria
     for hora=1:length(potencia_requerida)
         tic;
         if hora ==1
-
             waitbar(hora/length(potencia_requerida),f,'El programa está optimizando');
         else
             timeOut=mean(timer_keep(timer_keep>0))+std(timer_keep(timer_keep>0))/2;
@@ -119,7 +118,7 @@ if infanteria
             [lco_minimo,index_mLcoe]=min(lco.total);
             best_lcoe(generacion)=lco_minimo;
             best_equipos(generacion,:)=[panel.cantidad(index_mLcoe),turbina.cantidad(index_mLcoe)];
-            probability=log(lco.total);
+            probability=1./(1+exp(-lco.total));
             if generacion>1
                 if pError(memoria_lcoe(generacion-1),memoria_lcoe(generacion))<pos_min || generacion>max_gen
                     if ver_24==true
@@ -216,18 +215,20 @@ if infanteria
 
     %Inicio normalizar
     
-%     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
-%     setA=normalize(config);
-%     distancesset=pdist2(setM,setA);
-%     [~,horaWin]=min(distancesset);
-%     a.Modulo=ceil(config(horaWin,1));
-%     a.Turbina=ceil(config(horaWin,2));
-%     a.LCOE=config(horaWin,3);
-     printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
-         structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
-%     disp(a);
+    setM=([a.Modulo,a.Turbina,a.LCOE]);
+    setA=(config);
+    distancesset=pdist2(setM,setA);
+    [~,horaWin]=min(distancesset);
+    a.Modulo=ceil(config(horaWin,1));
+    a.Turbina=ceil(config(horaWin,2));
+    a.LCOE=config(horaWin,3);
+    printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
+        structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
+    disp(a);
 
     %Fin normalizar
+
+    
     panel.cantidad=a.Modulo;
     turbina.cantidad=a.Turbina;
     memory_SOCi=zeros(1,1);
@@ -416,7 +417,7 @@ generacionNew=zeros(row,col,deep);
 if k_friends>row
     k_friends=row-1;
 end
-ventaja=round(k_child*0.21);
+ventaja=round(k_child*0.5);
 engagement=randi([1,row],k_friends,k_child);
 [~,idx_min_LCOE]=min(results);
 coord_new_lcoe=[randperm(k_friends,ventaja)',randperm(k_child,ventaja)'];
