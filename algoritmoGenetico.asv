@@ -127,7 +127,15 @@ if infanteria
                     else
                         hora_ver=distribucionHoras;
                     end
+                    if (sum(isnan(potenciaUsada.panel))>0 || sum(isnan(potenciaUsada.turbina))>0 || sum(isnan(potenciaUsada.diesel))>0)
+                         disp(["En la hora ",hora,"y en la iteración ",generacion])
+                         disp("Pausar")                       
+                    end
                     potenciaSuplida(hora)=mean(potenciaUsada.energiaGenerada);
+                    if isnan(potenciaSuplida(hora))
+                        disp(["En la hora ",hora,"y en la iteración ",generacion])
+                        disp("Pausar")
+                    end
                     memory_SOCi=repmat(mean(battery.SOCi),length(battery.SOCi),1);
                     cargaPromedioBaterias(hora)=mean(memory_SOCi);
                     memory_SOCL(:,hora)=repmat(mean(battery.SOCL(:,hora)),length(battery.SOCL(:,hora)),1);
@@ -236,8 +244,21 @@ if infanteria
     maxDiesel= sum(energy_accumulator(:,2),1)*1.5;
     id=1;
     for hora=1:length(potencia_requerida)
+        if(sum(isnan(turbina.cantidad))>0 || sum(isnan(panel.cantidad))>0)
+            disp("Pausar")
+        end
         battery.SOCi=memory_SOCi;
+        if(hora==53 || hora==52)
+            disp("Pausar")
+        end
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
+        if (sum(isnan(potenciaUsada.panel))>0 || sum(isnan(potenciaUsada.turbina))>0 || sum(isnan(potenciaUsada.diesel))>0)
+            disp(["En la hora ",hora,"y en la iteración ",generacion])
+            disp("Pausar")                       
+        end
+        if(sum(isnan(turbina.cantidad))>0 || sum(isnan(panel.cantidad))>0)
+            disp("Pausar")
+        end
         
         memory_SOCi=battery.SOCi;
         maxDiesel=maxDiesel-potenciaUsada.diesel;

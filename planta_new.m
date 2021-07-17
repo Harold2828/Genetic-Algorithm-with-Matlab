@@ -52,13 +52,7 @@ energia_generada=renovable_gen+diesel_gen;
 
 %Para energía total igual a cero
 energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) );
-if (hora==53)
-    disp("Pause");
-end
-if(sum(energy)==length(energy))
-    disp("Matar");
-end
-if(sum(energy)>0)
+if(sum(energy)>0 && length(energy)>1)
     panel.cantidad(energy)=NaN;
     panel.cantidad=round(fillmissing(panel.cantidad,'nearest'));
     pv_gen(energy)=NaN;
@@ -102,17 +96,11 @@ battery.lcoe=lcoe(battery.aci,0.02,battery.SOCi,0);
 %Fin para energía total igual a cero
 
 potencia.panel=pv_gen;
-if(isnan(potencia.panel))
-    disp("Pausar en esa parte")
-end
+
 potencia.turbina=tur_gen;
-if(isnan(potencia.turbina))
-    disp("Pausar en esa parte")
-end
+
 potencia.diesel=diesel_gen;
-if(isnan(potencia.diesel))
-    disp("Pausar en esa parte")
-end
+
 potencias=[pv_gen,tur_gen,battery.SOCi,diesel_gen];
 
 %lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
