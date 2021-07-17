@@ -1,4 +1,4 @@
-function [panel,turbina,battery,diesel,lco,potencia]=planta_new(clima,panel,turbina,inverter,battery,lco,potenciaRequeria,hora,diesel)
+function [panel,turbina,battery,diesel_gen,lco,potencia]=planta_new(clima,panel,turbina,inverter,battery,lco,potenciaRequeria,hora)
 %%
 p_Turbina=@(eficiencia_turbina,d_aire,area_barrido,vel_viento,numero_turbina)...
     (1/2.*d_aire.*area_barrido.*eficiencia_turbina.*(vel_viento.^3).*numero_turbina.*10^-3 );
@@ -8,12 +8,7 @@ p_Panel=@(eficiencia_panel,area,irradiancia,numero_panel)...
 
 p_Diesel=@(potencia_requerida,pot_renovable)(potencia_requerida-pot_renovable);
 
-inversion=@(numeroEquipos,costoEquipo1,costoEquipo2)(numeroEquipos.*costoEquipo1+costoEquipo2);
-aci=@(inversion,tasaInteres,vidaUtil)( (tasaInteres.*inversion.*(1+tasaInteres).^vidaUtil)./( (1+tasaInteres).^vidaUtil -1 ) );
-acCom=@(energyDiesel,efGenerator,hr,priceDiesel)(energyDiesel./efGenerator.*hr.*priceDiesel);
-lcoe=@(aciV,acom,energiaGenerada,acOther)((aciV+acom+acOther));
-
-%lcoe=@(lcoSol,lcoViento,lcoBat,lcoDiesel,energy_sol,energy_wind,energy_bat,energy_diesel)((lcoSol+lcoViento+lcoBat+lcoDiesel)./eGen);
+lcoe=@(lcoSol,lcoViento,lcoBat,lcoDiesel,energy_sol,energy_wind,energy_bat,energy_diesel)((lcoSol+lcoViento+lcoBat+lcoDiesel)./eGen);
 lcoe_formula=@(lcoe_used,energy_used)(lcoe_used.*energy_used);
 %%
 panel_run=panel.cantidad;
@@ -49,72 +44,23 @@ end
 diesel_gen=p_Diesel(potenciaRequeria(hora),renovable_gen);
 diesel_gen(diesel_gen<0)=diesel_gen(diesel_gen<0).*0;
 energia_generada=renovable_gen+diesel_gen;
-
-%Para energía total igual a cero
-energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) ); %Está bien la formula?
-if(sum(energy)>0 && length(energy)>1 && false)
-    panel.cantidad(energy)=NaN;
-    panel.cantidad=round(fillmissing(panel.cantidad,'nearest'));
-    pv_gen(energy)=NaN;
-    pv_gen=fillmissing(pv_gen,'nearest');
-    
-    turbina.cantidad(energy)=NaN;
-    turbina.cantidad=round(fillmissing(turbina.cantidad,'nearest'));
-    tur_gen(energy)=NaN;
-    tur_gen=fillmissing(tur_gen,'nearest');
-    
-    diesel_gen(energy)=NaN;
-    diesel_gen=fillmissing(diesel_gen,'nearest');
-    
-    battery.SOCi(energy)=NaN;
-    battery.SOCi=fillmissing(battery.SOCi,'nearest');
-    
-    battery.SOCL(energy,hora)=NaN;
-    battery.SOCL(:,hora)=round(fillmissing(battery.SOCL(:,hora),'nearest'));
-end
-
-panel.inversion=inversion(panel.cantidad,panel.costo,inverter.costo);
-panel.aci=aci(panel.inversion,8/100,panel.vidaUtil);
-panel.lcoe=lcoe(panel.aci,0.015,pv_gen,0);
-
-turbina.inversion=inversion(turbina.cantidad,turbina.costo,0);
-turbina.aci=aci(turbina.inversion,8/100,turbina.vidaUtil);
-turbina.lcoe=lcoe(turbina.aci,0.015,tur_gen,0);
-
-
-diesel.inversion=inversion(diesel_gen./diesel.potencia,diesel.costo,0);
-diesel.acCom=acCom(diesel_gen,diesel.eficiencia,diesel.hr,diesel.precioCombustible);
-diesel.aci=aci(diesel.inversion,8/100,diesel.vidaUtil);
-diesel.lcoe=lcoe(diesel.aci,0.02,diesel_gen,diesel.acCom);
-
-
-battery.inversion=inversion(battery.SOCi./battery.SOCMax,battery.costo,0);
-battery.aci=aci(battery.inversion,8/100,battery.vidaUtil);
-battery.lcoe=lcoe(battery.aci,0.02,battery.SOCi,0);
-
-
-%Fin para energía total igual a cero
-
 potencia.panel=pv_gen;
-
 potencia.turbina=tur_gen;
-
 potencia.diesel=diesel_gen;
-
 potencias=[pv_gen,tur_gen,battery.SOCi,diesel_gen];
-
-%lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
-
-%Para calcular de nuevo los LCOE
-lco_temporal=[panel.lcoe,turbina.lcoe,diesel.lcoe,battery.lcoe];
-valorMultiplicar=length(potenciaRequeria);
-%valorMultiplicar=90;
-lco.total=sum(lco_temporal,2)./(energia_generada*valorMultiplicar);
-lco.total(isnan(lco.total))=0;
-lco.total(isinf(lco.total))=max(lco.total(~isinf(lco.total)));
-if isinf(mean(lco.total))
-    disp("Pause");
+lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
+[col_p,~]=size(pv_gen);
+lco_temporal=zeros(col_p,4);
+for i=1:4
+    IM=lcoe_formula(lcoe_using(i),potencias(:,i));
+    IM_replace01=isnan(IM);
+    IM_replace02=isinf(IM);
+    IM(logical(IM_replace01))=0;
+    IM(logical(IM_replace02))=0;
+    lco_temporal(:,i)=IM;
 end
+lco.total=sum(lco_temporal,2)./energia_generada;
+lco.total(isnan(lco.total))=0;
 potencia.energiaGenerada=energia_generada;
 try
     round_please=1;
