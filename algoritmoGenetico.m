@@ -211,18 +211,23 @@ if infanteria
             a=[config(hora_ver,:),...
                 ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
     end
-
+    a(isnan(a))=0;
     a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Numero motores diesel','Horas diesel activo','IteracionMediana'});
-    setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
-    setA=normalize(config);
-    distancesset=pdist2(setM,setA);
-    [~,horaWin]=min(distancesset);
-    a.Modulo=ceil(config(horaWin,1));
-    a.Turbina=ceil(config(horaWin,2));
-    a.LCOE=config(horaWin,3);
-    printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
-        structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
-    disp(a);
+
+    %Inicio normalizar
+    
+%     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
+%     setA=normalize(config);
+%     distancesset=pdist2(setM,setA);
+%     [~,horaWin]=min(distancesset);
+%     a.Modulo=ceil(config(horaWin,1));
+%     a.Turbina=ceil(config(horaWin,2));
+%     a.LCOE=config(horaWin,3);
+     printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
+         structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
+%     disp(a);
+
+    %Fin normalizar
     panel.cantidad=a.Modulo;
     turbina.cantidad=a.Turbina;
     memory_SOCi=zeros(1,1);
@@ -352,11 +357,13 @@ if infanteria
     figure('Name','Tabla de validación de la herramienta 1');
     title('Validación de la herramienta');
     j=1;
-        formas=["-o","-s"];
+        formas=["-o","-x"];
+        
+        %Pendiente bar
     for name = variablesNameUse(end-1:end)
-        p=randi(length(formas),1);
+        %p=randi(length(formas),1);
         color='rb';
-        plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
+        plot(tabla_energias.(string(name)),formas(j),'Color',color(j),'MarkerFaceColor',color(j),...
             'MarkerEdgeColor','k','DisplayName',string(name));
         j=j+1;
         hold on

@@ -8,8 +8,8 @@ p_Panel=@(eficiencia_panel,area,irradiancia,numero_panel)...
 
 p_Diesel=@(potencia_requerida,pot_renovable)(potencia_requerida-pot_renovable);
 
-inversion=@(numeroEquipos,costoEquipo1,costoEquipo2)(numeroEquipos.*(costoEquipo1+costoEquipo2));
-aci=@(inversion,tasaInteres,vidaUtil)( (inversion.*(1+tasaInteres).^vidaUtil)./( (1+tasaInteres).^vidaUtil -1 ) );
+inversion=@(numeroEquipos,costoEquipo1,costoEquipo2)(numeroEquipos.*costoEquipo1+costoEquipo2);
+aci=@(inversion,tasaInteres,vidaUtil)( (tasaInteres.*inversion.*(1+tasaInteres).^vidaUtil)./( (1+tasaInteres).^vidaUtil -1 ) );
 acCom=@(energyDiesel,efGenerator,hr,priceDiesel)(energyDiesel./efGenerator.*hr.*priceDiesel);
 lcoe=@(aciV,acom,energiaGenerada,acOther)((aciV+acom+acOther));
 
@@ -21,7 +21,7 @@ turbina_run=turbina.cantidad;
 pv_gen=p_Panel(panel.eficiencia(hora),panel.area,clima.irradiancia(hora),panel_run);
 tur_gen=p_Turbina(turbina.eficiencia,clima.densidadAire(hora),clima.velViento(hora),turbina_run,turbina.areaBarrido);
 renovable_gen=sum([pv_gen,tur_gen],2);
-posGG=logical(renovable_gen>potenciaRequeria(hora));
+posGG=logical(renovable_gen+10==potenciaRequeria(hora));
 posUG=~posGG;
 %%
 if isempty(battery.SOCi(posGG))==0
@@ -51,7 +51,7 @@ diesel_gen(diesel_gen<0)=diesel_gen(diesel_gen<0).*0;
 energia_generada=renovable_gen+diesel_gen;
 
 %Para energía total igual a cero
-energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) );
+energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) ); %Está bien la formula?
 if(sum(energy)>0 && length(energy)>1)
     panel.cantidad(energy)=NaN;
     panel.cantidad=round(fillmissing(panel.cantidad,'nearest'));
@@ -107,7 +107,9 @@ potencias=[pv_gen,tur_gen,battery.SOCi,diesel_gen];
 
 %Para calcular de nuevo los LCOE
 lco_temporal=[panel.lcoe,turbina.lcoe,diesel.lcoe,battery.lcoe];
-lco.total=sum(lco_temporal,2)./energia_generada;
+%valorMultiplicar=length(potenciaRequeria);
+valorMultiplicar=90;
+lco.total=sum(lco_temporal,2)./(energia_generada*valorMultiplicar);
 lco.total(isnan(lco.total))=0;
 lco.total(isinf(lco.total))=max(lco.total(~isinf(lco.total)));
 if isinf(mean(lco.total))

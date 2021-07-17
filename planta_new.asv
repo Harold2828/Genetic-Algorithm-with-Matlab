@@ -8,10 +8,10 @@ p_Panel=@(eficiencia_panel,area,irradiancia,numero_panel)...
 
 p_Diesel=@(potencia_requerida,pot_renovable)(potencia_requerida-pot_renovable);
 
-inversion=@(numeroEquipos,costoEquipo1,costoEquipo2)(numeroEquipos.*(costoEquipo1+costoEquipo2));
-aci=@(inversion,tasaInteres,vidaUtil)( (inversion.*(1+tasaInteres).^vidaUtil)./( (1+tasaInteres).^vidaUtil -1 ) );
+inversion=@(numeroEquipos,costoEquipo1,costoEquipo2)(numeroEquipos.*(costoEquipo1)+costoEquipo2);
+aci=@(inversion,tasaInteres,vidaUtil)( (tasaInteres.*inversion.*(1+tasaInteres).^vidaUtil)./( (1+tasaInteres).^vidaUtil -1 ) );
 acCom=@(energyDiesel,efGenerator,hr,priceDiesel)(energyDiesel./efGenerator.*hr.*priceDiesel);
-lcoe=@(aciV,acom,energiaGenerada,acOther)((aciV.*acom.*acOther)./energiaGenerada.*energiaGenerada);
+lcoe=@(aciV,acom,energiaGenerada,acOther)((aciV+acom+acOther));
 
 %lcoe=@(lcoSol,lcoViento,lcoBat,lcoDiesel,energy_sol,energy_wind,energy_bat,energy_diesel)((lcoSol+lcoViento+lcoBat+lcoDiesel)./eGen);
 lcoe_formula=@(lcoe_used,energy_used)(lcoe_used.*energy_used);
@@ -51,54 +51,56 @@ diesel_gen(diesel_gen<0)=diesel_gen(diesel_gen<0).*0;
 energia_generada=renovable_gen+diesel_gen;
 
 %Para energía total igual a cero
-energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) );
-if(sum(energy)>0)
+energy=( pv_gen+tur_gen+diesel_gen+battery.SOCi-battery.SOCL(:,hora)~=potenciaRequeria(hora) ); %Está bien la formula?
+if(sum(energy)>0 && length(energy)>1)
     panel.cantidad(energy)=NaN;
-    panel.cantidad(energy)=round(fillmissing(panel.cantidad,'nearest'));
+    panel.cantidad=round(fillmissing(panel.cantidad,'nearest'));
     pv_gen(energy)=NaN;
     pv_gen=fillmissing(pv_gen,'nearest');
+    
+    turbina.cantidad(energy)=NaN;
+    turbina.cantidad=round(fillmissing(turbina.cantidad,'nearest'));
+    tur_gen(energy)=NaN;
+    tur_gen=fillmissing(tur_gen,'nearest');
+    
+    diesel_gen(energy)=NaN;
+    diesel_gen=fillmissing(diesel_gen,'nearest');
+    
+    battery.SOCi(energy)=NaN;
+    battery.SOCi=fillmissing(battery.SOCi,'nearest');
+    
+    battery.SOCL(energy,hora)=NaN;
+    battery.SOCL(:,hora)=round(fillmissing(battery.SOCL(:,hora),'movmedian',10));
 end
+
 panel.inversion=inversion(panel.cantidad,panel.costo,inverter.costo);
 panel.aci=aci(panel.inversion,8/100,panel.vidaUtil);
 panel.lcoe=lcoe(panel.aci,0.015,pv_gen,0);
 
-turbina.cantidad(energy)=NaN;
-turbina.cantidad(energy)=round(fillmissing(turbina.cantidad,'nearest'));
-tur_gen(energy)=NaN;
-tur_gen(energy)=fillmissing(tur_gen,'nearest');
 turbina.inversion=inversion(turbina.cantidad,turbina.costo,0);
 turbina.aci=aci(turbina.inversion,8/100,turbina.vidaUtil);
 turbina.lcoe=lcoe(turbina.aci,0.015,tur_gen,0);
 
-diesel_gen(energy)=NaN;
-diesel_gen(energy)=fillmissing(diesel_gen,'nearest');
+
 diesel.inversion=inversion(diesel_gen./diesel.potencia,diesel.costo,0);
 diesel.acCom=acCom(diesel_gen,diesel.eficiencia,diesel.hr,diesel.precioCombustible);
 diesel.aci=aci(diesel.inversion,8/100,diesel.vidaUtil);
 diesel.lcoe=lcoe(diesel.aci,0.02,diesel_gen,diesel.acCom);
 
-battery.SOCi(energy)=NaN;
-battery.SOCi(energy)=fillmissing(battery.SOCi,'nearest');
+
 battery.inversion=inversion(battery.SOCi./battery.SOCMax,battery.costo,0);
 battery.aci=aci(battery.inversion,8/100,battery.vidaUtil);
 battery.lcoe=lcoe(battery.aci,0.02,battery.SOCi,0);
-battery.SOCL(energy,hora)=NaN;
-battery.SOCL(energy,hora)=round(fillmissing(battery.SOCL(:,hora),'movmedian',10));
+
 
 %Fin para energía total igual a cero
 
 potencia.panel=pv_gen;
-if(isnan(potencia.panel))
-    disp("Pausar en esa parte")
-end
+
 potencia.turbina=tur_gen;
-if(isnan(potencia.turbina))
-    disp("Pausar en esa parte")
-end
+
 potencia.diesel=diesel_gen;
-if(isnan(potencia.diesel))
-    disp("Pausar en esa parte")
-end
+
 potencias=[pv_gen,tur_gen,battery.SOCi,diesel_gen];
 
 %lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
