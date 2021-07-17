@@ -1,13 +1,14 @@
-function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,~,areaLibre)
+function [a,pie_chat_IM,t10]=algoritmoGenetico(~,areaLibre)
 infanteria=true;
 
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     
-    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,moduloDiesel]=cargaExcel();
+    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,diesel]=cargaExcel();
     battery.eficiencia=battery.eficiencia./100;
     turbina.eficiencia=turbina.eficiencia./100;
     inverter.eficiencia=inverter.eficiencia./100;
+    diesel.eficiencia=diesel.eficiencia/100;
     rng(1,'philox');
 
     pot_panel=@(irradiancia,area,eficiencia_panel)(irradiancia.*eficiencia_panel.*area);
@@ -33,7 +34,7 @@ if infanteria
     fast_mode=true;
     %%
     
-    potencia_requerida=curva_de_carga;
+    %potencia_requerida=curva_de_carga;
     clima.altura=turbina.alturaReferencia;
     h_ref=turbina.alturaReferencia;
     h=turbina.alturaUsada;
@@ -64,7 +65,7 @@ if infanteria
     config=energy_accumulator;
     structure_memory=struct();
     distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potencia_requerida)*0.001)+1));
-    valorDiesel=moduloDiesel.potencia ;
+    valorDiesel=diesel.potencia ;
     for hora=1:length(potencia_requerida)
         tic;
         if hora ==1
@@ -112,7 +113,7 @@ if infanteria
             turbina.cantidad(end)=0;
             battery.SOCi=memory_SOCi;
             battery.SOCL=memory_SOCL;
-            [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+            [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
             memoria_lcoe(generacion)=mean(lco.total);
             memoria_equipos(generacion,:)=mean([panel.cantidad,turbina.cantidad]);
             [lco_minimo,index_mLcoe]=min(lco.total);
@@ -135,7 +136,7 @@ if infanteria
                         disp(hora);
                         disp("Pausar");
                     end
-                    energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
+                    energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),potenciaUsada.diesel]),generacion];
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
                     structure_memory(hora).best_equipos=best_equipos;
@@ -150,13 +151,22 @@ if infanteria
             if sum(panel.cantidad==0)==length(panel.cantidad)
                 part1=panel.cantidad;
             else
-                part1=de2bi(panel.cantidad);
+                 try
+                    part1=de2bi(panel.cantidad);
+                catch
+                    disp("Pausar")
+                end
+                
             end
 
             if sum(turbina.cantidad==0)==length(turbina.cantidad)
                 part2=turbina.cantidad;
             else
-                part2=de2bi(turbina.cantidad);
+                try
+                    part2=de2bi(turbina.cantidad);
+                catch
+                    disp("Pausar")
+                end
             end
 
             %Cruce
@@ -228,7 +238,7 @@ if infanteria
     for hora=1:length(potencia_requerida)
 
         battery.SOCi=memory_SOCi;
-        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
         memory_SOCi=battery.SOCi;
         maxDiesel=maxDiesel-potenciaUsada.diesel;
         if maxDiesel<=0
@@ -242,6 +252,9 @@ if infanteria
                                   potenciaUsada.turbina,...
                                   battery.SOCi,...
                                   potenciaUsada.diesel];
+        if(isnan(keep_ans))
+        disp("Matar")
+        end
         if battery.SOCi>battery.maxEnergySelected
             battery.SOCi=battery.maxEnergySelected;
         end
