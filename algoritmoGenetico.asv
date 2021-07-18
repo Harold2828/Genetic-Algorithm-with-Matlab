@@ -139,7 +139,7 @@ if infanteria
                         disp(hora);
                         disp("Pausar");
                     end
-                    energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
+                    energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel.generar]),generacion];
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
                     structure_memory(hora).best_equipos=best_equipos;
@@ -222,8 +222,8 @@ if infanteria
     a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Numero motores diesel','Horas diesel activo','IteracionMediana'});
     a.Modulo=ceil(a.Modulo);
     a.Turbina=ceil(a.Turbina);
-    a.("Numero motores diesel")=ceil(a.("Numero motores diesel").*10^3./valorDiesel);
-    a.("Numero bateria")=ceil(a.("Numero bateria") .*10^3./(battery.SOCMax));
+    a.("Numero motores diesel")=ceil(a.("Numero motores diesel")./valorDiesel.*10^-3);
+    a.("Numero bateria")=ceil(a.("Numero bateria") ./(battery.SOCMax.*10^3));
 %     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
 %     setA=normalize(config);
 %     distancesset=pdist2(setM,setA);
@@ -295,6 +295,7 @@ if infanteria
     end
 
     porcentajes=round(round(vectorPotencias,2)/sum(round(vectorPotencias,2)),2);
+    porcentajes=porcentajes(1)+(1-sum(porcentajes));
     %%
     pie_porcentajes=pie(porcentajes);
     colormap ([1,1,0;
@@ -499,4 +500,5 @@ function [pT]=specialTurbine(clima,turbina)
     pT=pT.*turbina.eficiencia;
     return;
 end
+
 

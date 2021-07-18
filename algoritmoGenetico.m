@@ -4,7 +4,7 @@ infanteria=true;
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     
-    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,moduloDiesel]=cargaExcel();
+    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,diesel]=cargaExcel();
     battery.eficiencia=battery.eficiencia./100;
     turbina.eficiencia=turbina.eficiencia./100;
     inverter.eficiencia=inverter.eficiencia./100;
@@ -64,7 +64,7 @@ if infanteria
     config=energy_accumulator;
     structure_memory=struct();
     distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potencia_requerida)*0.001)+1));
-    valorDiesel=moduloDiesel.potencia ;
+    valorDiesel=diesel.potencia ;
     for hora=1:length(potencia_requerida)
         tic;
         if hora ==1
@@ -113,7 +113,7 @@ if infanteria
             battery.SOCi=memory_SOCi;
             battery.SOCL=memory_SOCL;
             
-            [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+            [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
             
             
             
@@ -139,7 +139,7 @@ if infanteria
                         disp(hora);
                         disp("Pausar");
                     end
-                    energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
+                    energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel.generar]),generacion];
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
                     structure_memory(hora).best_equipos=best_equipos;
@@ -250,7 +250,7 @@ if infanteria
     for hora=1:length(potencia_requerida)
 
         battery.SOCi=memory_SOCi;
-        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
         memory_SOCi=battery.SOCi;
 %         maxDiesel=maxDiesel-potenciaUsada.diesel;
 %         if maxDiesel<=0
@@ -294,8 +294,8 @@ if infanteria
         labelsPorcentajes={'Modulos PV ','Turbinas eolicas ','Generador(es) Diesel ','Baterias'}';
     end
 
-    porcentajes=round(round(vectorPotencias,2)/sum(round(vectorPotencias,2)),2);
-    porcentajes=porcentajes(1)+(1-sum(porcentajes));
+    porcentajes=vectorPotencias/sum(round(vectorPotencias,2));
+    %porcentajes=porcentajes(1)+(1-sum(porcentajes));
     %%
     pie_porcentajes=pie(porcentajes);
     colormap ([1,1,0;

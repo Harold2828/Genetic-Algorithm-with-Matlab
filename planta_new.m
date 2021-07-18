@@ -1,4 +1,4 @@
-function [panel,turbina,battery,diesel_gen,lco,potencia]=planta_new(clima,panel,turbina,inverter,battery,lco,potenciaRequeria,hora)
+function [panel,turbina,battery,diesel,lco,potencia]=planta_new(clima,panel,turbina,inverter,battery,lco,potenciaRequeria,hora,diesel)
 %%
 p_Turbina=@(eficiencia_turbina,d_aire,area_barrido,vel_viento,numero_turbina)...
     (1/2.*d_aire.*area_barrido.*eficiencia_turbina.*(vel_viento.^3).*numero_turbina.*10^-3 );
@@ -10,6 +10,11 @@ p_Diesel=@(potencia_requerida,pot_renovable)(potencia_requerida-pot_renovable);
 
 lcoe=@(lcoSol,lcoViento,lcoBat,lcoDiesel,energy_sol,energy_wind,energy_bat,energy_diesel)((lcoSol+lcoViento+lcoBat+lcoDiesel)./eGen);
 lcoe_formula=@(lcoe_used,energy_used)(lcoe_used.*energy_used);
+%LCOE
+I=@(costoEquipo,numeroEquipos)(costoEquipo.*numeroEquipos);
+ACi=@(inversion,tasaInteres,vidaUtil)( (tasaInteres.*inversion.*(1+tasaInteres).^vidaUtil)./((1+tasaInteres).^vidaUtil -1) );
+AVs=@(valorSalvamento,tasaInteres,vidaUtil)( (valorSalvamento.*tasaInteres)./((1+tasaInteres).^vidaUtil-1) );
+ACcomb=@(energiaGenerador,eficienciaGenerador,heatRate,costoDiesel)( (energiaGenerador.*heatRage.*costoDiesel)./eficienciaGenerador )
 %%
 panel_run=panel.cantidad;
 turbina_run=turbina.cantidad;
@@ -41,13 +46,20 @@ if isempty(battery.SOCi(posUG))==0
     end
 end
 %%
-diesel_gen=p_Diesel(potenciaRequeria(hora),renovable_gen);
-diesel_gen(diesel_gen<0)=diesel_gen(diesel_gen<0).*0;
-energia_generada=renovable_gen+diesel_gen;
+diesel.generar=p_Diesel(potenciaRequeria(hora),renovable_gen);
+diesel.generar(diesel.generar<0)=diesel.generar(diesel.generar<0).*0;
+energia_generada=renovable_gen+diesel.generar;
 potencia.panel=pv_gen;
 potencia.turbina=tur_gen;
-potencia.diesel=diesel_gen;
-potencias=[pv_gen,tur_gen,battery.SOCi,diesel_gen];
+potencia.diesel=diesel.generar;
+%inicioLCOE
+% inversion=zeros(4,1);
+% inversion(1)=I(panel.costo,panel.cantidad);
+% inversion(2)=I(turbina.costo,turbina.cantidad);
+% inversion(3)=I(battery.costo,ceil(battery.SOCL(:,hora)./battery.SOCMax));
+% inversion(4)=I(diesel.costo,
+%Fin
+potencias=[pv_gen,tur_gen,battery.SOCi,diesel.generar];
 lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
 [col_p,~]=size(pv_gen);
 lco_temporal=zeros(col_p,4);
