@@ -112,13 +112,17 @@ if infanteria
             turbina.cantidad(end)=0;
             battery.SOCi=memory_SOCi;
             battery.SOCL=memory_SOCL;
+            
             [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+            
+            
+            
             memoria_lcoe(generacion)=mean(lco.total);
             memoria_equipos(generacion,:)=mean([panel.cantidad,turbina.cantidad]);
             [lco_minimo,index_mLcoe]=min(lco.total);
             best_lcoe(generacion)=lco_minimo;
             best_equipos(generacion,:)=[panel.cantidad(index_mLcoe),turbina.cantidad(index_mLcoe)];
-            probability=1./(1+exp(-lco.total))+(potencia_requerida(hora)-potenciaUsada.energiaGenerada).^2;
+            probability=1./(1+exp(-lco.total))+(potencia_requerida(hora)-potenciaUsada.energiaGenerada).^((potencia_requerida(hora)./potenciaUsada.energiaGenerada));
             if generacion>1
                 if pError(memoria_lcoe(generacion-1),memoria_lcoe(generacion))<pos_min || generacion>max_gen
                     if ver_24==true
@@ -170,10 +174,10 @@ if infanteria
             turbina.cantidad=bi2de(poblation_mutation2);
 
             panel.cantidad(panel.cantidad>mP(hora))=mP(hora);
-            turbina.cantidad(panel.cantidad>mP(hora))=0;
+            %turbina.cantidad(panel.cantidad>mP(hora))=0;
             
             turbina.cantidad(turbina.cantidad>mT(hora))=mT(hora);
-            panel.cantidad(turbina.cantidad>mT(hora))=0;
+            %panel.cantidad(turbina.cantidad>mT(hora))=0;
             
             generacion=generacion+1;
         end
@@ -188,17 +192,26 @@ if infanteria
     title('Carga de baterias')
     grid()
     %%
-
+    
+    %
+    topPot=max(potencia_requerida);
+    k1=config(:,1)>0; %Las configuraciones que tienen más de 0 paneles
+    %En todos usa potencia nominal [kW]
+    energySun=panel.potencia.*config(:,1); %<- Potencia generada por panel
+    eneryWind= turbina.potencia.*config(:,2);%<- Potencia generada por turbina
+    energyBattery=ceil(energy_accumulator(:,1)./battery.SOCMax).*battery.amperioHora.*battery.voltaje.*10^-3; %<- Potencia generada por bateria
+    eneryDiesel=energy_accumulator(:,2);%<- Potencia generada por diesel
+    mk=(energySun+eneryWind+energyBattery+eneryDiesel)./topPot; %Compara todas las energias con la potencia máxima
+    
+    [~,idS]=sort(logical(k1.*(mk<=1)),'descend');
+    idS=idS(1);
+    %a=[paneles.cantidad(id),turbina.cantidad(id),energy_accumulator(id,1:2),horas_activo,median(energy_accumulator(:,3))];
     switch trp
         case false
 
             horas_activo=sum(energy_accumulator(:,2)>0);
-            if isnan(mean(config(config(:,1)>0,1)))
-                paneles_cantidad=0;
-            else
-                paneles_cantidad=mean(config(config(:,1)>0,1));
-            end
-            a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(max(energy_accumulator(:,2))./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
+            %a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(max(energy_accumulator(:,2))./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
+            a=[config(idS,:),sum(energy_accumulator(:,1:2)),horas_activo,median(energy_accumulator(:,3))];
             battery.valueSelected=ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax);
             disp(ceil(sum(energy_accumulator(:,2),1)));
         case true
@@ -207,13 +220,18 @@ if infanteria
     end
 
     a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Numero motores diesel','Horas diesel activo','IteracionMediana'});
-    setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
-    setA=normalize(config);
-    distancesset=pdist2(setM,setA);
-    [~,horaWin]=min(distancesset);
-    a.Modulo=ceil(config(horaWin,1));
-    a.Turbina=ceil(config(horaWin,2));
-    a.LCOE=config(horaWin,3);
+    a.Modulo=ceil(a.Modulo);
+    a.Turbina=ceil(a.Turbina);
+    a.("Numero motores diesel")=ceil(a.("Numero motores diesel")./valorDiesel.*10^-3);
+    a.("Numero bateria")=ceil(a.("Numero bateria") ./(battery.SOCMax.*10^3));
+%     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
+%     setA=normalize(config);
+%     distancesset=pdist2(setM,setA);
+%     [~,horaWin]=min(distancesset);
+%     a.Modulo=ceil(config(horaWin,1));
+%     a.Turbina=ceil(config(horaWin,2));
+%     a.LCOE=config(horaWin,3);
+    horaWin=idS;
     printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
         structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
     disp(a);
@@ -277,6 +295,7 @@ if infanteria
     end
 
     porcentajes=round(round(vectorPotencias,2)/sum(round(vectorPotencias,2)),2);
+    porcentajes=porcentajes(1)+(1-sum(porcentajes));
     %%
     pie_porcentajes=pie(porcentajes);
     colormap ([1,1,0;
