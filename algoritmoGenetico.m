@@ -1,4 +1,4 @@
-function [a,pie_chat_IM,t10]=algoritmoGenetico(curva_de_carga,~,areaLibre)
+function [a,pie_chat_IM,t10]=algoritmoGenetico(~,areaLibre)
 infanteria=true;
 
 % if exist('todosLosDatos.mat')==2
@@ -13,6 +13,10 @@ infanteria=true;
 if infanteria
     f = waitbar(0,'Está cargando el programa, por favor espere...','Name','Estado del programa');
     
+    [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,diesel]=cargaExcel();
+    battery.eficiencia=battery.eficiencia./100;
+    turbina.eficiencia=turbina.eficiencia./100;
+    inverter.eficiencia=inverter.eficiencia./100;
     rng(1,'philox');
 
     %Ecuaciones
@@ -22,6 +26,7 @@ if infanteria
     pot_panel=@(irradiancia,area,eficiencia_panel)(irradiancia.*eficiencia_panel.*area);
     %Maxima cantidad de paneles
     maxPanel=@(potencia_requerida,irradiancia,area,eficiencia_panel)(ceil(potencia_requerida./(pot_panel(irradiancia,area,eficiencia_panel).*10^-3)));
+<<<<<<< HEAD
     %Maxima turbina
     %Para la potencia de la turbina
      pot_turbina=@(d_aire,area_barrido,eficiencia_turbina,vel_viento)(1/2.*d_aire.*area_barrido.*eficiencia_turbina.*vel_viento.^3);
@@ -29,6 +34,13 @@ if infanteria
      maxTurbina=@(potenciaNecesaria,d_aire,area_barrido,eficiencia_turbina,vel_viento)...
          (ceil(potenciaNecesaria./(pot_turbina(d_aire,area_barrido,eficiencia_turbina,vel_viento).*10^-3)));
     rangos=[1129,1152;2113,2137;5953,5976;7369,7391]; %Datos manual
+=======
+    %pot_turbina=@(d_aire,area_barrido,eficiencia_turbina,vel_viento)(1/2.*d_aire.*area_barrido.*eficiencia_turbina.*vel_viento.^3);     
+    pot_turbina=specialTurbine(clima,turbina);
+    maxTurbina=@(potenciaNecesaria,d_aire,area_barrido,eficiencia_turbina,vel_viento)...
+         (ceil(potenciaNecesaria./(pot_turbina.*10^-3)));
+    rangos=[1129,1152;2113,2137;5953,5976;7369,7391]; 
+>>>>>>> victor
     helpRandi=@(cantidadEquipo,minEquip,maxEquip)(randi([minEquip,maxEquip],cantidadEquipo,1));
     %Porcentaje de error
     pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
@@ -36,11 +48,17 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
+<<<<<<< HEAD
     % 600
     max_gen=600;        %Modificar estos valores para que sea más rapida la solución
     number_equip=20;
     %8.5e-6
     pos_min=8.5e-4;       %Modificar este valor para que se más suave la grafica
+=======
+    max_gen=100;  
+    number_equip=30;
+    pos_min=8.5e-4;       
+>>>>>>> victor
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100; %Recomendable, dejar 1% en la probabilidad de mutación, si es necesario cambiar 
     k_friends=round(number_equip.*0.3);
@@ -48,8 +66,8 @@ if infanteria
     trp=false;
     fast_mode=true;
     %%
-    [~,inverter,panel,turbina,battery,lco,clima,~]=cargaExcel();
-    potencia_requerida=curva_de_carga;
+    
+    %potencia_requerida=curva_de_carga;
     clima.altura=turbina.alturaReferencia;
     h_ref=turbina.alturaReferencia;
     h=turbina.alturaUsada;
@@ -57,7 +75,7 @@ if infanteria
     if h ==0
         h=10;
     end
-    areaL=areaLibre;
+    %areaL=areaLibre;
     alpha=turbina.alpha;
     clima.velViento=v_h(h,h_ref,clima.velViento,alpha);
     lco.total=zeros(number_equip,1);
@@ -86,7 +104,11 @@ if infanteria
     config=energy_accumulator;
     structure_memory=struct();
     distribucionHoras=round(linspace(1,length(potencia_requerida),ceil(length(potencia_requerida)*0.001)+1));
+<<<<<<< HEAD
     valorDiesel=12*10^3 ;%kW
+=======
+    valorDiesel=diesel.potencia ;
+>>>>>>> victor
     for hora=1:length(potencia_requerida)
         tic;
         if hora ==1
@@ -119,7 +141,7 @@ if infanteria
         end
 
         while true
-            %%
+            %% Iteraciónes
             if generacion==1
 
                 %Combinaciones de equipos
@@ -136,13 +158,17 @@ if infanteria
             turbina.cantidad(end)=0;
             battery.SOCi=memory_SOCi;
             battery.SOCL=memory_SOCL;
-            [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+            
+            [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
+            
+            
+            
             memoria_lcoe(generacion)=mean(lco.total);
             memoria_equipos(generacion,:)=mean([panel.cantidad,turbina.cantidad]);
             [lco_minimo,index_mLcoe]=min(lco.total);
             best_lcoe(generacion)=lco_minimo;
             best_equipos(generacion,:)=[panel.cantidad(index_mLcoe),turbina.cantidad(index_mLcoe)];
-            probability=log(lco.total);
+            probability=1./(1+exp(-lco.total))+(potencia_requerida(hora)-potenciaUsada.energiaGenerada).^((potencia_requerida(hora)./potenciaUsada.energiaGenerada));
             if generacion>1
                 if pError(memoria_lcoe(generacion-1),memoria_lcoe(generacion))<pos_min || generacion>max_gen
                     if ver_24==true
@@ -160,8 +186,16 @@ if infanteria
                     %memory_SOCL(:,hora)=battery.SOCL(:,hora);
                     memory_SOCL(:,hora)=repmat(mean(battery.SOCL(:,hora)),length(battery.SOCL(:,hora)),1);
                     config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
+<<<<<<< HEAD
                     energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel]),generacion];
                     %Incluyendo diesel 100%
+=======
+                    if isinf(mean(lco.total))
+                        disp(hora);
+                        disp("Pausar");
+                    end
+                    energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel.generar]),generacion];
+>>>>>>> victor
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
                     structure_memory(hora).best_equipos=best_equipos;
@@ -197,7 +231,11 @@ if infanteria
             turbina.cantidad=bi2de(poblation_mutation2);
 
             panel.cantidad(panel.cantidad>mP(hora))=mP(hora);
+            %turbina.cantidad(panel.cantidad>mP(hora))=0;
+            
             turbina.cantidad(turbina.cantidad>mT(hora))=mT(hora);
+            %panel.cantidad(turbina.cantidad>mT(hora))=0;
+            
             generacion=generacion+1;
         end
 
@@ -212,19 +250,32 @@ if infanteria
     title('Carga de baterias')
     grid()
     %%
+<<<<<<< HEAD
     %Aquí finaliza el procedimiento
     %Comienza el resto, tablas.. imagenes...
 
+=======
+    
+    %
+    topPot=max(potencia_requerida);
+    k1=config(:,1)>0; %Las configuraciones que tienen más de 0 paneles
+    %En todos usa potencia nominal [kW]
+    energySun=panel.potencia.*config(:,1); %<- Potencia generada por panel
+    eneryWind= turbina.potencia.*config(:,2);%<- Potencia generada por turbina
+    energyBattery=ceil(energy_accumulator(:,1)./battery.SOCMax).*battery.amperioHora.*battery.voltaje.*10^-3; %<- Potencia generada por bateria
+    eneryDiesel=energy_accumulator(:,2);%<- Potencia generada por diesel
+    mk=(energySun+eneryWind+energyBattery+eneryDiesel)./topPot; %Compara todas las energias con la potencia máxima
+    
+    [~,idS]=sort(logical(k1.*(mk<=1)),'descend');
+    idS=idS(1);
+    %a=[paneles.cantidad(id),turbina.cantidad(id),energy_accumulator(id,1:2),horas_activo,median(energy_accumulator(:,3))];
+>>>>>>> victor
     switch trp
         case false
 
             horas_activo=sum(energy_accumulator(:,2)>0);
-            if isnan(mean(config(config(:,1)>0,1)))
-                paneles_cantidad=0;
-            else
-                paneles_cantidad=mean(config(config(:,1)>0,1));
-            end
-            a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(max(energy_accumulator(:,2))./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
+            %a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(max(energy_accumulator(:,2))./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
+            a=[config(idS,:),sum(energy_accumulator(:,1:2)),horas_activo,median(energy_accumulator(:,3))];
             battery.valueSelected=ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax);
             disp(ceil(sum(energy_accumulator(:,2),1)));
         case true
@@ -233,6 +284,7 @@ if infanteria
     end
 
     a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Numero motores diesel','Horas diesel activo','IteracionMediana'});
+<<<<<<< HEAD
     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
     setA=normalize(config);
     distancesset=pdist2(setM,setA);
@@ -255,6 +307,20 @@ if infanteria
     %ylabel('Turbinas')
     %zlabel('LCOE')
 
+=======
+    a.Modulo=ceil(a.Modulo);
+    a.Turbina=ceil(a.Turbina);
+    a.("Numero motores diesel")=ceil(a.("Numero motores diesel")./valorDiesel.*10^-3);
+    a.("Numero bateria")=ceil(a.("Numero bateria") ./(battery.SOCMax.*10^3));
+%     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
+%     setA=normalize(config);
+%     distancesset=pdist2(setM,setA);
+%     [~,horaWin]=min(distancesset);
+%     a.Modulo=ceil(config(horaWin,1));
+%     a.Turbina=ceil(config(horaWin,2));
+%     a.LCOE=config(horaWin,3);
+    horaWin=idS;
+>>>>>>> victor
     printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
         structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
     disp(a);
@@ -277,14 +343,22 @@ if infanteria
     for hora=1:length(potencia_requerida)
 
         battery.SOCi=memory_SOCi;
-        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora);
+        [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
         memory_SOCi=battery.SOCi;
+<<<<<<< HEAD
         maxDiesel=maxDiesel-potenciaUsada.diesel;
         if maxDiesel<=0
             potenciaUsada.diesel=0;
             id=id+1;
         end
         
+=======
+%         maxDiesel=maxDiesel-potenciaUsada.diesel;
+%         if maxDiesel<=0
+%             potenciaUsada.diesel=0;
+%             id=id+1;
+%         end
+>>>>>>> victor
         potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
         
         potenciaGenerada=potenciaRenovable+potenciaUsada.diesel;
@@ -326,7 +400,8 @@ if infanteria
         labelsPorcentajes={'Modulos PV ','Turbinas eolicas ','Generador(es) Diesel ','Baterias'}';
     end
 
-    porcentajes=round(round(vectorPotencias,2)/sum(round(vectorPotencias,2)),2);
+    porcentajes=vectorPotencias/sum(round(vectorPotencias,2));
+    %porcentajes=porcentajes(1)+(1-sum(porcentajes));
     %%
     pie_porcentajes=pie(porcentajes);
     colormap ([1,1,0;
@@ -447,7 +522,8 @@ if infanteria
     %para las tablas
     tiempo=1;
     panel.energiaTiempo=sum(pot_panel(clima.irradiancia,panel.area,panel.eficiencia)).*a.Modulo.*tiempo.*10^-3+sum(energy_accumulator(:,1)); %kWh/mes
-    turbina.energiaTiempo=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento)).*a.Turbina.*tiempo.*10^-3;
+    turbina.energiaTiempo=sum(pot_turbina).*a.Turbina.*tiempo.*10^-3;
+    %turbina.energiaTiempo=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento)).*a.Turbina.*tiempo.*10^-3;
     dieselU.energiaTiempo=pAcumUsed(:,1).*10^-3.*tiempo;
 
     t10=table(panel.energiaTiempo,turbina.energiaTiempo,dieselU.energiaTiempo,'VariableNames',{'PVkWhmonth','WindkWhmonth','dieselkWhmonth'});
@@ -466,11 +542,11 @@ if infanteria
 
     catch ME
         close(f);
-
         messageError=sprintf("Ha ocurrido un error\n %s",ME.message);
         errordlg(messageError,'Error');
     end
 end
+%Cruce y mutación
 end
 %Para el cruce
 function [generacionNew]=reproduccion(genetic,results,k_friends,k_child)
@@ -548,4 +624,16 @@ for dim=1:deep
 end
 zerg=genetic;
 end
+function [pT]=specialTurbine(clima,turbina)
+    pT=clima.velViento*0;
+    c1=turbina.velocidadArranque<=clima.velViento;
+    c2=turbina.velocidadNominal>clima.velViento ;
+    c3=clima.velViento<=turbina.velocidadMaxima ;
+    v=clima.velViento(logical(c1.*c2));
+    pT(logical(c1.*c2))=v.^3 .*(turbina.potencia./(turbina.velocidadNominal.^3-turbina.velocidadArranque.^3))-turbina.potencia.*(turbina.velocidadArranque.^3./(turbina.velocidadNominal.^3-turbina.velocidadArranque.^3));
+    pT(logical(~c2.*c3))=turbina.potencia;
+    pT=pT.*turbina.eficiencia;
+    return;
+end
+
 

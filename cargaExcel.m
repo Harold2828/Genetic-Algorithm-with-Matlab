@@ -1,6 +1,11 @@
+<<<<<<< HEAD
 function [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida]=cargaExcel()
 %LMPC
 fullYear=true; %<---
+=======
+function [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,diesel]=cargaExcel()
+fullYear=true; 
+>>>>>>> victor
 fullC=["25","26"];
 if fullYear
     cantidad_datos=table2array(readtable("Entradas.xlsx","sheet","RecursoRenovable","range","A:A")); 
@@ -8,7 +13,7 @@ if fullYear
     fullC=[string(auto+1),string(auto+2)];
 end
 ro=@(temperatura,h)(354.049./temperatura.*exp(-0.034.*h./temperatura));
-rangos=["B2:B4";"B7:B9";"B12:B19";"B22:B27";"I3:I6"]; 
+rangos=["B2:B4";"B7:B9";"B12:B22";"B25:B32";"I3:I6";"B35:B36";"M3:M6";"M8:M10";"M12:M14";"M16:M21"]; 
 nRangos=length(rangos); 
 exportar=struct("a",{});
 %%
@@ -25,7 +30,7 @@ for i=1:nRangos
         case 1
             %Datos generales
             areaL=reclamar_matrix(1);
-            inverter.eficiencia=reclamar_matrix(2)./100;
+            inverter.eficiencia=reclamar_matrix(2);
             clima.altura=reclamar_matrix(3);
         case 2
             %Modelo fotovoltaico
@@ -33,31 +38,71 @@ for i=1:nRangos
             panel.area=reclamar_matrix(3);
             opts.Sheet="Eficiencia del modulo FV";
             opts.DataRange=strcat("A2:A",fullC(1)); 
+            panel.eficienciaOriginal=reclamar_matrix(2);
             panel.eficiencia=table2array(readtable("Entradas.xlsx",opts));
         case 3
             %Modelo eolico
             turbina.potencia=reclamar_matrix(1);
-            turbina.eficiencia=reclamar_matrix(2)./100;
-            turbina.areaBarrido=reclamar_matrix(3);
-            clima.densidadAire=reclamar_matrix(4);
-            turbina.alturaReferencia=reclamar_matrix(5);
-            turbina.alturaUsada=reclamar_matrix(6);
-            turbina.alpha=reclamar_matrix(7);
-            turbina.areaOcupada=reclamar_matrix(8);
+            turbina.eficiencia=reclamar_matrix(2);
+            turbina.velocidadNominal=reclamar_matrix(3);
+            turbina.velocidadArranque=reclamar_matrix(4);
+            turbina.velocidadMaxima=reclamar_matrix(5);
+            turbina.areaBarrido=reclamar_matrix(6);
+            clima.densidadAire=reclamar_matrix(7);
+            clima.densidad=reclamar_matrix(7);
+            turbina.alturaReferencia=reclamar_matrix(8);
+            turbina.alturaUsada=reclamar_matrix(9);
+            turbina.alpha=reclamar_matrix(10);
+            turbina.areaOcupada=reclamar_matrix(11);
         case 4
+<<<<<<< HEAD
             %Modelo baterias
             battery.eficiencia=reclamar_matrix(1)./100;
+=======
+            battery.eficiencia=reclamar_matrix(1);
+>>>>>>> victor
             battery.autoDescarga=reclamar_matrix(2);
             battery.SOCMax=reclamar_matrix(3);
             battery.SOCMin=reclamar_matrix(4);
-            battery.profDescarga=reclamar_matrix(5);
-            battery.diasAuto=reclamar_matrix(6);
+            battery.amperioHora=reclamar_matrix(5);
+            battery.voltaje=reclamar_matrix(6);
+            battery.profDescarga=reclamar_matrix(7);
+            battery.diasAuto=reclamar_matrix(8);
         case 5
             %Costo nivelado de la energía
             lco.sol=reclamar_matrix(1);%LMPC
             lco.viento=reclamar_matrix(2);
             lco.bat=reclamar_matrix(3);
             lco.diesel=reclamar_matrix(4);
+        case 6
+            diesel.potencia=reclamar_matrix(1);
+            diesel.eficiencia=reclamar_matrix(2);
+        case 7
+            %Para costo nivelado de la energía
+            panel.costo=reclamar_matrix(1);
+            panel.coym=reclamar_matrix(2);
+            inverter.costo=reclamar_matrix(3);
+            panel.vidaUtil=reclamar_matrix(4);
+            
+        case 8
+            %Para eolico
+            turbina.costo=reclamar_matrix(1);
+            turbina.coym=reclamar_matrix(2);
+            turbina.vidaUtil=reclamar_matrix(3);
+            
+        case 9
+            %Para Baterias
+            battery.costo=reclamar_matrix(1);
+            battery.coym=reclamar_matrix(2);
+            battery.vidaUtil=reclamar_matrix(3);
+        case 10
+            %Para generador diesel
+            diesel.costo=reclamar_matrix(1);
+            diesel.coym=reclamar_matrix(2);
+            diesel.hr=reclamar_matrix(3);
+            diesel.precioCombustible=reclamar_matrix(4);
+            diesel.vidaUtil=reclamar_matrix(5);
+            diesel.valorSalvamento=reclamar_matrix(6);
     end
     
 end
