@@ -14,7 +14,7 @@ lcoe_formula=@(lcoe_used,energy_used)(lcoe_used.*energy_used);
 I=@(costoEquipo,numeroEquipos)(costoEquipo.*numeroEquipos);
 ACi=@(inversion,tasaInteres,vidaUtil)( (tasaInteres.*inversion.*(1+tasaInteres).^vidaUtil)./((1+tasaInteres).^vidaUtil -1) );
 AVs=@(valorSalvamento,tasaInteres,vidaUtil)( (valorSalvamento.*tasaInteres)./((1+tasaInteres).^vidaUtil-1) );
-ACcomb=@(energiaGenerador,eficienciaGenerador,heatRate,costoDiesel)( (energiaGenerador.*heatRage.*costoDiesel)./eficienciaGenerador )
+ACcomb=@(energiaGenerador,eficienciaGenerador,heatRate,costoDiesel)( (energiaGenerador.*heatRate.*costoDiesel)./eficienciaGenerador );
 %%
 panel_run=panel.cantidad;
 turbina_run=turbina.cantidad;
@@ -53,25 +53,32 @@ potencia.panel=pv_gen;
 potencia.turbina=tur_gen;
 potencia.diesel=diesel.generar;
 %inicioLCOE
-% inversion=zeros(4,1);
-% inversion(1)=I(panel.costo,panel.cantidad);
-% inversion(2)=I(turbina.costo,turbina.cantidad);
-% inversion(3)=I(battery.costo,ceil(battery.SOCL(:,hora)./battery.SOCMax));
-% inversion(4)=I(diesel.costo,
+lcoeValue=zeros(length(panel.cantidad),4);
+%Panel
+lcoeValue(:,1)=ACi(I(panel.costo,panel.cantidad),8/100,panel.vidaUtil)+...
+    I(panel.costo,panel.cantidad).*panel.coym;
+%lcoeValue(:,1)=lcoeValue(:,1)./pv_gen;
+%Turbina
+lcoeValue(:,2)=ACi(I(turbina.costo,turbina.cantidad),8/100,turbina.vidaUtil)+...
+    I(turbina.costo,turbina.cantidad).*turbina.coym;
+%lcoeValue(:,2)=lcoeValue(:,2)./tur_gen;
+%Bateria
+lcoeValue(:,3)=ACi(I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))),8/100,battery.vidaUtil)+...
+    I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))).*battery.coym;
+%lcoeValue(:,3)=lcoeValue(:,3)./battery.SOCL(:,hora);
+%Diesel
+lcoeValue(:,4)=ACi(I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^-3))),8/100,diesel.vidaUtil)+...
+    I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^-3))).*diesel.coym+...
+    ACcomb(diesel.generar,diesel.eficiencia,diesel.hr,diesel.costo)-...
+    AVs(diesel.valorSalvamento,I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^-3))),diesel.vidaUtil);
+%lcoeValue(:,4)=lcoeValue(:,4)./diesel.generar;
 %Fin
 potencias=[pv_gen,tur_gen,battery.SOCi,diesel.generar];
 lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
 [col_p,~]=size(pv_gen);
 lco_temporal=zeros(col_p,4);
-for i=1:4
-    IM=lcoe_formula(lcoe_using(i),potencias(:,i));
-    IM_replace01=isnan(IM);
-    IM_replace02=isinf(IM);
-    IM(logical(IM_replace01))=0;
-    IM(logical(IM_replace02))=0;
-    lco_temporal(:,i)=IM;
-end
-lco.total=sum(lco_temporal,2)./energia_generada;
+
+lco.total=sum(lcoeValue,2)./energia_generada;
 lco.total(isnan(lco.total))=0;
 potencia.energiaGenerada=energia_generada;
 try
