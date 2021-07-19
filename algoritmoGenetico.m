@@ -17,6 +17,7 @@ if infanteria
     battery.eficiencia=battery.eficiencia./100;
     turbina.eficiencia=turbina.eficiencia./100;
     inverter.eficiencia=inverter.eficiencia./100;
+    diesel.eficiencia=diesel.eficiencia./100;
     rng(1,'philox');
 
     %Ecuaciones
