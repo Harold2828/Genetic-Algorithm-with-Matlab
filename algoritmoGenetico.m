@@ -8,6 +8,7 @@ if infanteria
     battery.eficiencia=battery.eficiencia./100;
     turbina.eficiencia=turbina.eficiencia./100;
     inverter.eficiencia=inverter.eficiencia./100;
+    diesel.eficiencia=diesel.eficiencia./100;
     rng(1,'philox');
 
     pot_panel=@(irradiancia,area,eficiencia_panel)(irradiancia.*eficiencia_panel.*area);
@@ -22,8 +23,8 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=100;  
-    number_equip=30;
+    max_gen=600;  
+    number_equip=50;
     pos_min=8.5e-4;       
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100;  
