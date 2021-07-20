@@ -1,11 +1,5 @@
-<<<<<<< HEAD
-function [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida]=cargaExcel()
-%LMPC
-fullYear=true; %<---
-=======
 function [areaL,inverter,panel,turbina,battery,lco,clima,potencia_requerida,diesel]=cargaExcel()
 fullYear=true; 
->>>>>>> victor
 fullC=["25","26"];
 if fullYear
     cantidad_datos=table2array(readtable("Entradas.xlsx","sheet","RecursoRenovable","range","A:A")); 
@@ -17,7 +11,6 @@ rangos=["B2:B4";"B7:B9";"B12:B22";"B25:B32";"I3:I6";"B35:B36";"M3:M6";"M8:M10";"
 nRangos=length(rangos); 
 exportar=struct("a",{});
 %%
-%sheet 1 -> Input
 for i=1:nRangos
     opts=spreadsheetImportOptions("NumVariables",1);
     opts.Sheet="input";
@@ -28,12 +21,10 @@ for i=1:nRangos
     reclamar_matrix=table2array(reclamar);
     switch i
         case 1
-            %Datos generales
             areaL=reclamar_matrix(1);
             inverter.eficiencia=reclamar_matrix(2);
             clima.altura=reclamar_matrix(3);
         case 2
-            %Modelo fotovoltaico
             panel.potencia=reclamar_matrix(1);
             panel.area=reclamar_matrix(3);
             opts.Sheet="Eficiencia del modulo FV";
@@ -41,7 +32,6 @@ for i=1:nRangos
             panel.eficienciaOriginal=reclamar_matrix(2);
             panel.eficiencia=table2array(readtable("Entradas.xlsx",opts));
         case 3
-            %Modelo eolico
             turbina.potencia=reclamar_matrix(1);
             turbina.eficiencia=reclamar_matrix(2);
             turbina.velocidadNominal=reclamar_matrix(3);
@@ -55,12 +45,7 @@ for i=1:nRangos
             turbina.alpha=reclamar_matrix(10);
             turbina.areaOcupada=reclamar_matrix(11);
         case 4
-<<<<<<< HEAD
-            %Modelo baterias
-            battery.eficiencia=reclamar_matrix(1)./100;
-=======
             battery.eficiencia=reclamar_matrix(1);
->>>>>>> victor
             battery.autoDescarga=reclamar_matrix(2);
             battery.SOCMax=reclamar_matrix(3);
             battery.SOCMin=reclamar_matrix(4);
@@ -69,8 +54,7 @@ for i=1:nRangos
             battery.profDescarga=reclamar_matrix(7);
             battery.diasAuto=reclamar_matrix(8);
         case 5
-            %Costo nivelado de la energía
-            lco.sol=reclamar_matrix(1);%LMPC
+            lco.sol=reclamar_matrix(1);
             lco.viento=reclamar_matrix(2);
             lco.bat=reclamar_matrix(3);
             lco.diesel=reclamar_matrix(4);
@@ -115,7 +99,6 @@ ambiente=readtable("Entradas.xlsx",opts);
 potencia_requerida=ambiente.Var1;
 clima.irradiancia=ambiente.Var2;
 clima.velViento=ambiente.Var3;
-%Para lo de la densidad
 opts=spreadsheetImportOptions("NumVariables",1);
 opts.Sheet="Eficiencia del modulo FV";
 opts.DataRange= strcat("C2:C",fullC(1));
