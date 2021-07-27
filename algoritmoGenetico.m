@@ -23,8 +23,8 @@ if infanteria
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
-    max_gen=600;  
-    number_equip=50;
+    max_gen=100;  
+    number_equip=20;
     pos_min=8.5e-4;       
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100;  
@@ -136,13 +136,6 @@ if infanteria
                     cargaPromedioBaterias(hora)=mean(memory_SOCi);
                     memory_SOCL(:,hora)=repmat(mean(battery.SOCL(:,hora)),length(battery.SOCL(:,hora)),1);
                     config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
-<<<<<<< HEAD
-                    if isinf(mean(lco.total))
-                        disp(hora);
-                        disp("Pausar");
-                    end
-=======
->>>>>>> main
                     energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel.generar]),generacion];
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
@@ -263,6 +256,7 @@ if infanteria
 %         end
         potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
         potenciaGenerada=potenciaRenovable+potenciaUsada.diesel;
+        %%keep_ans(:,2)=keep_ans(:,2)+battery.SOCi;
         keep_ans(hora,[1,3:end])=[potenciaGenerada,...
                                   potenciaUsada.panel,...
                                   potenciaUsada.turbina,...
