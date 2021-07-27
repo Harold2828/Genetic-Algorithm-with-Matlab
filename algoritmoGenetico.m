@@ -25,7 +25,7 @@ if infanteria
     %Especificaciones Algoritmo Genetico
     max_gen=100;  
     number_equip=20;
-    pos_min=8.5e-4;       
+    pos_min=8.5e-3;       
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100;  
     k_friends=round(number_equip.*0.3);
@@ -201,6 +201,7 @@ if infanteria
     mk=(energySun+eneryWind+energyBattery+eneryDiesel)./topPot; %Compara todas las energias con la potencia máxima
     
     [~,idS]=sort(logical(k1.*(mk<=1)),'descend');
+    f1=ceil(energy_accumulator(:,end)./(diesel.potencia.*10^3));%Recien agregado
     idS=idS(1);
     %a=[paneles.cantidad(id),turbina.cantidad(id),energy_accumulator(id,1:2),horas_activo,median(energy_accumulator(:,3))];
     switch trp
@@ -208,7 +209,7 @@ if infanteria
 
             horas_activo=sum(energy_accumulator(:,2)>0);
             %a=[ceil(paneles_cantidad),ceil(mean(config(:,2))),mean(config(:,3)),ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),ceil(max(energy_accumulator(:,2))./valorDiesel),horas_activo,median(energy_accumulator(:,3))];
-            a=[config(idS,:),sum(energy_accumulator(:,1:2)),horas_activo,median(energy_accumulator(:,3))];
+            a=[config(idS,:),f1(idS),sum(energy_accumulator(:,1)),horas_activo,median(energy_accumulator(:,3))];
             battery.valueSelected=ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax);
             disp(ceil(sum(energy_accumulator(:,2),1)));
         case true
