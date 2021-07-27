@@ -48,7 +48,7 @@ end
 %%
 diesel.generar=p_Diesel(potenciaRequeria(hora),renovable_gen);
 diesel.generar(diesel.generar<0)=diesel.generar(diesel.generar<0).*0;
-diesel.eficiencia=diesel.generar./diesel.consumoCalorifico;
+diesel.eficiencia=diesel.generar./(diesel.consumoCalorifico.*10.^3);
 energia_generada=renovable_gen+diesel.generar;
 potencia.panel=pv_gen;
 potencia.turbina=tur_gen;
