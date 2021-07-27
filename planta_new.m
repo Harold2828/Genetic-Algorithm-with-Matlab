@@ -48,6 +48,7 @@ end
 %%
 diesel.generar=p_Diesel(potenciaRequeria(hora),renovable_gen);
 diesel.generar(diesel.generar<0)=diesel.generar(diesel.generar<0).*0;
+diesel.eficiencia=diesel.generar./diesel.consumoCalorifico;
 energia_generada=renovable_gen+diesel.generar;
 potencia.panel=pv_gen;
 potencia.turbina=tur_gen;
@@ -64,7 +65,7 @@ lcoeValue(:,2)=ACi(I(turbina.costo,turbina.cantidad),8/100,turbina.vidaUtil)+...
 %lcoeValue(:,2)=lcoeValue(:,2)./tur_gen;
 %Bateria
 lcoeValue(:,3)=ACi(I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))),8/100,battery.vidaUtil)+...
-    I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))).*battery.coym;
+    I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))).*battery.coym+ceil(battery.SOCL(:,hora)./battery.SOCMax.*10^3).*battery.costo;
 %lcoeValue(:,3)=lcoeValue(:,3)./battery.SOCL(:,hora);
 %Diesel
 lcoeValue(:,4)=ACi(I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^-3))),8/100,diesel.vidaUtil)+...

@@ -60,7 +60,7 @@ for i=1:nRangos
             lco.diesel=reclamar_matrix(4);
         case 6
             diesel.potencia=reclamar_matrix(1);
-            diesel.eficiencia=reclamar_matrix(2);
+            diesel.consumoCalorifico=reclamar_matrix(2);
         case 7
             %Para costo nivelado de la energía
             panel.costo=reclamar_matrix(1);
