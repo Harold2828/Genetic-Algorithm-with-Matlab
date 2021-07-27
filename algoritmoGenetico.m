@@ -8,7 +8,7 @@ if infanteria
     battery.eficiencia=battery.eficiencia./100;
     turbina.eficiencia=turbina.eficiencia./100;
     inverter.eficiencia=inverter.eficiencia./100;
-    diesel.eficiencia=diesel.eficiencia./100;
+%    diesel.eficiencia=diesel.eficiencia./100;
     rng(1,'philox');
 
     pot_panel=@(irradiancia,area,eficiencia_panel)(irradiancia.*eficiencia_panel.*area);
@@ -123,7 +123,7 @@ if infanteria
             [lco_minimo,index_mLcoe]=min(lco.total);
             best_lcoe(generacion)=lco_minimo;
             best_equipos(generacion,:)=[panel.cantidad(index_mLcoe),turbina.cantidad(index_mLcoe)];
-            probability=1./(1+exp(-lco.total))+(potencia_requerida(hora)-potenciaUsada.energiaGenerada).^((potencia_requerida(hora)./potenciaUsada.energiaGenerada));
+            probability=1./(1+exp(-lco.total))+pError(potencia_requerida(hora),potenciaUsada.energiaGenerada)./100;
             if generacion>1
                 if pError(memoria_lcoe(generacion-1),memoria_lcoe(generacion))<pos_min || generacion>max_gen
                     if ver_24==true
@@ -136,10 +136,6 @@ if infanteria
                     cargaPromedioBaterias(hora)=mean(memory_SOCi);
                     memory_SOCL(:,hora)=repmat(mean(battery.SOCL(:,hora)),length(battery.SOCL(:,hora)),1);
                     config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
-                    if isinf(mean(lco.total))
-                        disp(hora);
-                        disp("Pausar");
-                    end
                     energy_accumulator(hora,:)=[mean([abs(battery.SOCL(:,hora)),diesel.generar]),generacion];
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
