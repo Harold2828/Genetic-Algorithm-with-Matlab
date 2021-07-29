@@ -48,7 +48,7 @@ end
 %%
 diesel.generar=p_Diesel(potenciaRequeria(hora),renovable_gen);
 diesel.generar(diesel.generar<0)=diesel.generar(diesel.generar<0).*0;
-diesel.eficiencia=diesel.generar./diesel.consumoCalorifico;
+diesel.eficiencia=diesel.generar./(diesel.consumoCalorifico.*10^3);
 energia_generada=renovable_gen+diesel.generar;
 potencia.panel=pv_gen;
 potencia.turbina=tur_gen;
@@ -68,10 +68,13 @@ lcoeValue(:,3)=ACi(I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*1
     I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))).*battery.coym+ceil(battery.SOCL(:,hora)./battery.SOCMax.*10^3).*battery.costo;
 %lcoeValue(:,3)=lcoeValue(:,3)./battery.SOCL(:,hora);
 %Diesel
-lcoeValue(:,4)=ACi(I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^-3))),8/100,diesel.vidaUtil)+...
-    I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^-3))).*diesel.coym+...
+lcoeValue(:,4)=ACi(I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^3))),8/100,diesel.vidaUtil)+...
+    I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^3))).*diesel.coym+...
     ACcomb(diesel.generar,diesel.eficiencia,diesel.hr,diesel.costo)-...
-    AVs(diesel.valorSalvamento,I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^-3))),diesel.vidaUtil);
+    AVs(diesel.valorSalvamento,I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^3))),diesel.vidaUtil);
+
+lcoeValue(isnan(lcoeValue))=0;
+lcoeValue(isinf(lcoeValue))=0;
 %lcoeValue(:,4)=lcoeValue(:,4)./diesel.generar;
 %Fin
 potencias=[pv_gen,tur_gen,battery.SOCi,diesel.generar];
