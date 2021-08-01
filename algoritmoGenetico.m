@@ -123,7 +123,7 @@ if infanteria
             [lco_minimo,index_mLcoe]=min(lco.total);
             best_lcoe(generacion)=lco_minimo;
             best_equipos(generacion,:)=[panel.cantidad(index_mLcoe),turbina.cantidad(index_mLcoe)];
-            probability=1./(1+exp(-lco.total))+pError(potencia_requerida(hora),potenciaUsada.energiaGenerada)./100;
+            probability=1./(1+exp(-lco.total));
             if generacion>1
                 if pError(memoria_lcoe(generacion-1),memoria_lcoe(generacion))<pos_min || generacion>max_gen
                     if ver_24==true
@@ -244,8 +244,10 @@ if infanteria
     battery.maxEnergySelected=battery.valueSelected*battery.SOCMax;
     maxDiesel= sum(energy_accumulator(:,2),1)*1.5;
     id=1;
+    battery.carga=0;
+    battery.descarga=0;
     for hora=1:length(potencia_requerida)
-
+        
         battery.SOCi=memory_SOCi;
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
         memory_SOCi=battery.SOCi;
@@ -254,13 +256,14 @@ if infanteria
 %             potenciaUsada.diesel=0;
 %             id=id+1;
 %         end
-        potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
-        potenciaGenerada=potenciaRenovable+potenciaUsada.diesel;
-        keep_ans(hora,2)=keep_ans(hora,2)+battery.SOCi; %
+        %potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
+        potenciaGenerada=potenciaUsada.energiaGenerada;
+        keep_ans(hora,2)=keep_ans(hora,2)+battery.carga; %
+        assert(round(potenciaGenerada,3)==round(keep_ans(hora,2),3));
         keep_ans(hora,[1,3:end])=[potenciaGenerada,...
                                   potenciaUsada.panel,...
                                   potenciaUsada.turbina,...
-                                  battery.SOCi,...
+                                  battery.descarga,...
                                   potenciaUsada.diesel];
         if battery.SOCi>battery.maxEnergySelected
             battery.SOCi=battery.maxEnergySelected;
@@ -420,7 +423,7 @@ generacionNew=zeros(row,col,deep);
 if k_friends>row
     k_friends=row-1;
 end
-ventaja=round(k_child*0.21);
+ventaja=round(k_child*0.01);
 engagement=randi([1,row],k_friends,k_child);
 [~,idx_min_LCOE]=min(results);
 coord_new_lcoe=[randperm(k_friends,ventaja)',randperm(k_child,ventaja)'];
@@ -498,5 +501,3 @@ function [pT]=specialTurbine(clima,turbina)
     pT=pT.*turbina.eficiencia;
     return;
 end
-
-

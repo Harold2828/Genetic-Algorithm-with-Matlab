@@ -31,6 +31,9 @@ if isempty(battery.SOCi(posGG))==0
         battery.SOCi(posMM)=bateria(inverter.eficiencia,battery.eficiencia,...
             battery.SOCi(posMM),battery.SOCMax,battery.SOCMin,battery.autoDescarga,renovable_gen(posMM),...
             potenciaRequeria(hora),"carga");
+        renovable_gen(posGG)=potenciaRequeria(hora)+battery.SOCi(posMM); %La energía sobrante se carga
+        battery.carga=battery.SOCi; 
+        battery.carga(~posMM)=0;
     end
 end
 %%
@@ -42,14 +45,17 @@ if isempty(battery.SOCi(posUG))==0
         battery.SOCi(posMm)=bateria(inverter.eficiencia,battery.eficiencia,battery.SOCi(posMm),battery.SOCMax,...
             battery.SOCMin,battery.autoDescarga,renovable_gen(posMm),potenciaRequeria(hora),"descarga");
          battery.SOCL(posMm,hora)=antes-battery.SOCi(posMm);
+         battery.descarga=battery.SOCi;
+         battery.descarga(~posMm)=0;
         renovable_gen(posMm,:)=renovable_gen(posMm,:)+battery.SOCi(posMm);
     end
 end
 %%
-diesel.generar=p_Diesel(potenciaRequeria(hora),renovable_gen);
+diesel.generar=abs(potenciaRequeria(hora)-renovable_gen);
 diesel.generar(diesel.generar<0)=diesel.generar(diesel.generar<0).*0;
 diesel.eficiencia=diesel.generar./(diesel.consumoCalorifico.*10^3);
 energia_generada=renovable_gen+diesel.generar;
+assert(sum(round(energia_generada,3)>=round(potenciaRequeria(hora),3))==length(energia_generada));
 potencia.panel=pv_gen;
 potencia.turbina=tur_gen;
 potencia.diesel=diesel.generar;
@@ -64,8 +70,10 @@ lcoeValue(:,2)=ACi(I(turbina.costo,turbina.cantidad),8/100,turbina.vidaUtil)+...
     I(turbina.costo,turbina.cantidad).*turbina.coym;
 %lcoeValue(:,2)=lcoeValue(:,2)./tur_gen;
 %Bateria
+%
 lcoeValue(:,3)=ACi(I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))),8/100,battery.vidaUtil)+...
     I(battery.costo,ceil(battery.SOCL(:,hora)./(battery.SOCMax.*10^3))).*battery.coym+ceil(battery.SOCL(:,hora)./battery.SOCMax.*10^3).*battery.costo;
+
 %lcoeValue(:,3)=lcoeValue(:,3)./battery.SOCL(:,hora);
 %Diesel
 lcoeValue(:,4)=ACi(I(diesel.costo,ceil(diesel.generar./(diesel.potencia.*10^3))),8/100,diesel.vidaUtil)+...
