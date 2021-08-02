@@ -31,6 +31,8 @@ if isempty(battery.SOCi(posGG))==0
         battery.SOCi(posMM)=bateria(inverter.eficiencia,battery.eficiencia,...
             battery.SOCi(posMM),battery.SOCMax,battery.SOCMin,battery.autoDescarga,renovable_gen(posMM),...
             potenciaRequeria(hora),"carga");
+        battery.carga=battery.SOCi;
+        battery.carga(~posMM)=0;
     end
 end
 %%
@@ -43,6 +45,8 @@ if isempty(battery.SOCi(posUG))==0
             battery.SOCMin,battery.autoDescarga,renovable_gen(posMm),potenciaRequeria(hora),"descarga");
          battery.SOCL(posMm,hora)=antes-battery.SOCi(posMm);
         renovable_gen(posMm,:)=renovable_gen(posMm,:)+battery.SOCi(posMm);
+        battery.descarga=battery.SOCi;
+        battery.descarga(~posMm)=0;
     end
 end
 %%

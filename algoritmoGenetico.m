@@ -35,6 +35,9 @@ if infanteria
     %%
     
     %potencia_requerida=curva_de_carga;
+    memory_reqGen=zeros(length(potencia_requerida),2);
+    battery.carga=zeros(number_equip,1);
+    battery.descarga=battery.carga;
     clima.altura=turbina.alturaReferencia;
     h_ref=turbina.alturaReferencia;
     h=turbina.alturaUsada;
@@ -123,7 +126,7 @@ if infanteria
             [lco_minimo,index_mLcoe]=min(lco.total);
             best_lcoe(generacion)=lco_minimo;
             best_equipos(generacion,:)=[panel.cantidad(index_mLcoe),turbina.cantidad(index_mLcoe)];
-            probability=1./(1+exp(-lco.total))+pError(potencia_requerida(hora),potenciaUsada.energiaGenerada)./100;
+            probability=1./(1+exp(-lco.total));
             if generacion>1
                 if pError(memoria_lcoe(generacion-1),memoria_lcoe(generacion))<pos_min || generacion>max_gen
                     if ver_24==true
@@ -142,6 +145,25 @@ if infanteria
                     structure_memory(hora).best_equipos=best_equipos;
                     structure_memory(hora).best_lcoe=best_lcoe;
                     structure_memory(hora).memoria_lcoe=memoria_lcoe;
+                    %Puta tonteria
+                    memory_SOCi_Use=zeros(1,1);
+                    memory_SOCi_Use=zeros(1,length(potencia_requerida));
+                    batteryUse=battery;
+                    batteryUse.SOCi=memory_SOCi_Use;
+                    batteryUse.SOCL=memory_SOCi_Use;
+                    batteryUse.maxEnergySelected=batteryUse.valueSelected*batteryUse.SOCMax;
+                    batteryUse.carga=0;
+                    batteryUse.descarga=0;
+                    panelUse=panel;
+                    panelUse.cantidad=config(hora,1);
+                    turbinaUse=turbina;
+                    turbinaUse.cantidad=config(hora,2);
+                    dieselUse=diesel;
+                    [panelUse,turbinaUse,batteryUse,dieselUse,lco,potenciaUsada1]=planta_new(clima,panelUse,turbinaUse,inverter,batteryUse,lco,potencia_requerida,hora,dieselUse);
+                    
+                    memory_reqGen(hora,:)=[mean(potenciaUsada1.energiaGenerada),mean(potencia_requerida(hora)+batteryUse.carga)]; %Van a tener una ligera diferencia
+                    %Fin puta tonteria
+ 
                     if ~fast_mode
                         printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_lcoe)
                     end
@@ -244,6 +266,8 @@ if infanteria
     battery.maxEnergySelected=battery.valueSelected*battery.SOCMax;
     maxDiesel= sum(energy_accumulator(:,2),1)*1.5;
     id=1;
+    battery.carga=0;
+    battery.descarga=0;
     for hora=1:length(potencia_requerida)
 
         battery.SOCi=memory_SOCi;
@@ -256,7 +280,9 @@ if infanteria
 %         end
         potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
         potenciaGenerada=potenciaRenovable+potenciaUsada.diesel;
-        keep_ans(hora,2)=keep_ans(hora,2)+battery.SOCi; %
+        keep_ans(hora,2)=keep_ans(hora,2)+battery.carga; %
+        assert(round(potenciaGenerada,3)==round(keep_ans(hora,2),3));
+        %Esto no es una ecuación, es un vector 
         keep_ans(hora,[1,3:end])=[potenciaGenerada,...
                                   potenciaUsada.panel,...
                                   potenciaUsada.turbina,...
@@ -403,6 +429,29 @@ if infanteria
     %turbina.energiaTiempo=sum(pot_turbina(clima.densidadAire,turbina.areaBarrido,turbina.eficiencia,clima.velViento)).*a.Turbina.*tiempo.*10^-3;
     dieselU.energiaTiempo=pAcumUsed(:,1).*10^-3.*tiempo;
     t10=table(panel.energiaTiempo,turbina.energiaTiempo,dieselU.energiaTiempo,'VariableNames',{'PVkWhmonth','WindkWhmonth','dieselkWhmonth'});
+    %Para imprimir la puta tonteria
+    group=linspace(24,length(potencia_requerida),length(potencia_requerida)/24);
+    memoryLPN=zeros(length(potencia_requerida)/24,2);
+    i=1;
+    for iGroup=group
+        if(iGroup==24)
+            past=1;
+        else
+            past=jGroup+1;
+        end
+        memoryLPN(i,:)=sum(memory_reqGen(past:iGroup,:));
+        jGroup=iGroup;
+        i=i+1;
+    end
+    figure('Name','Optimo evaluado');
+    plot(memoryLPN(:,1),'s-','Color','b','MarkerEdgeColor','b','DisplayName','Energía requerida');
+    hold on
+    plot(memoryLPN(:,2),'o-','Color','r','MarkerEdgeColor','r','DisplayName','Energía generada');
+    xlabel("Día");
+    ylabel("Energía kWh");
+    grid minor ;
+    legend();
+        %Fim imprimir puta tonteria
     close (f);
 
     catch ME
