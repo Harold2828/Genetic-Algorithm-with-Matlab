@@ -81,6 +81,7 @@ lcoeValue(isnan(lcoeValue))=0;
 lcoeValue(isinf(lcoeValue))=0;
 %lcoeValue(:,4)=lcoeValue(:,4)./diesel.generar;
 %Fin
+lcoeValue=[lco.sol,lco.viento,lco.bat,lco.diesel];
 potencias=[pv_gen,tur_gen,battery.SOCi,diesel.generar];
 lcoe_using=[lco.sol,lco.viento,lco.bat,lco.diesel];
 [col_p,~]=size(pv_gen);
