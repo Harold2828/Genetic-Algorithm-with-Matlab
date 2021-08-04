@@ -147,10 +147,10 @@ if infanteria
                     structure_memory(hora).memoria_lcoe=memoria_lcoe;
                     %Puta tonteria
                     memory_SOCi_Use=zeros(1,1);
-                    memory_SOCi_Use=zeros(1,length(potencia_requerida));
+                    memory_SOCL_Use=zeros(number_equip,length(potencia_requerida));
                     batteryUse=battery;
                     batteryUse.SOCi=memory_SOCi_Use;
-                    batteryUse.SOCL=memory_SOCi_Use;
+                    batteryUse.SOCL=memory_SOCL_Use;
                     batteryUse.maxEnergySelected=batteryUse.valueSelected*batteryUse.SOCMax;
                     batteryUse.carga=0;
                     batteryUse.descarga=0;
@@ -266,10 +266,10 @@ if infanteria
     battery.maxEnergySelected=battery.valueSelected*battery.SOCMax;
     maxDiesel= sum(energy_accumulator(:,2),1)*1.5;
     id=1;
-    battery.carga=0;
-    battery.descarga=0;
-    for hora=1:length(potencia_requerida)
 
+    for hora=1:length(potencia_requerida)
+        battery.carga=0;
+        battery.descarga=0;
         battery.SOCi=memory_SOCi;
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
         memory_SOCi=battery.SOCi;
@@ -278,8 +278,8 @@ if infanteria
 %             potenciaUsada.diesel=0;
 %             id=id+1;
 %         end
-        potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
-        potenciaGenerada=potenciaRenovable+potenciaUsada.diesel;
+        %potenciaRenovable=potenciaUsada.panel+potenciaUsada.turbina+battery.SOCi;
+        potenciaGenerada=potenciaUsada.energiaGenerada;
         keep_ans(hora,2)=keep_ans(hora,2)+battery.carga; %
         assert(round(potenciaGenerada,3)==round(keep_ans(hora,2),3));
         %Esto no es una ecuación, es un vector 
