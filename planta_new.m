@@ -21,7 +21,7 @@ turbina_run=turbina.cantidad;
 pv_gen=p_Panel(panel.eficiencia(hora),panel.area,clima.irradiancia(hora),panel_run);
 tur_gen=p_Turbina(turbina.eficiencia,clima.densidadAire(hora),clima.velViento(hora),turbina_run,turbina.areaBarrido);
 renovable_gen=sum([pv_gen,tur_gen],2);
-posGG=logical(renovable_gen>potenciaRequeria(hora));
+posGG=logical( renovable_gen>potenciaRequeria(hora) );
 posUG=~posGG;
 %%
 if isempty(battery.SOCi(posGG))==0
@@ -46,12 +46,15 @@ if isempty(battery.SOCi(posUG))==0
             battery.SOCMin,battery.autoDescarga,renovable_gen(posMm),potenciaRequeria(hora),"descarga");
          battery.SOCL(posMm,hora)=antes-battery.SOCi(posMm);
         renovable_gen(posMm,:)=renovable_gen(posMm,:)+battery.SOCi(posMm);
-        battery.descarga=battery.SOCi;
+        battery.descarga=battery.SOCi; %Guarda la energía que se descargó de la bateria
         battery.descarga(~posMm)=0;
     end
 end
 %%
-diesel.generar=abs(potenciaRequeria(hora)-renovable_gen);
+if(hora==12)
+disp("Pause");
+end
+diesel.generar=potenciaRequeria(hora)-renovable_gen;
 diesel.generar(diesel.generar<0)=diesel.generar(diesel.generar<0).*0;
 diesel.eficiencia=diesel.generar./(diesel.consumoCalorifico.*10^3);
 energia_generada=renovable_gen+diesel.generar;
@@ -100,14 +103,22 @@ end
 end
  function eBateria=bateria(ef_inverter,ef_battery,SOC,SOCMax,SOCMin,ind_auto,e_gen,e_demand,tipo)
  carga=@(SOC,ind_auto,e_gen,e_demand,ef_inverter,ef_battery)...
-        (SOC.*(1-ind_auto)+ef_battery.*((e_gen-e_demand)./ef_inverter));
+        (SOC.*(1-ind_auto)+(e_gen-(e_demand./ef_inverter)).*ef_battery);
+    %(SOC.*(1-ind_auto)+ef_battery.*((e_gen-e_demand)./ef_inverter));
     descarga=@(SOC,ind_auto,e_gen,e_demand,ef_inverter)...
-        (SOC.*(1-ind_auto)+((-e_gen+e_demand)./ef_inverter));
+        (SOC.*(1-ind_auto)+((e_demand./ef_inverter)-e_gen));
+%(SOC.*(1-ind_auto)+((-e_gen+e_demand)./ef_inverter));
     switch string(upper(tipo))
         case "CARGA"
-            eBateria=carga(SOC,ind_auto,e_gen,e_demand,ef_inverter,ef_battery);
+            eBateria=abs(carga(SOC,ind_auto,e_gen,e_demand,ef_inverter,ef_battery));
+            raro=eBateria<0;
+            if(sum(raro)>0)
+                disp("Pausar ahora");
+            end
         otherwise
             eBateria=descarga(SOC,ind_auto,e_gen,e_demand,ef_inverter);
-            eBateria(eBateria>SOCMin)=SOCMin; %Porque la descarga es negativa
+            SOCMinx=SOC-SOCMin;
+            eBateria(eBateria>SOCMinx)=SOCMinx;
+            eBateria(eBateria+e_gen>e_demand)=e_demand-e_gen(eBateria+e_gen>e_demand);
     end
  end

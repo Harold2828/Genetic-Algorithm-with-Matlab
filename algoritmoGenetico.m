@@ -24,8 +24,8 @@ if infanteria
     %%
     %Especificaciones Algoritmo Genetico
     max_gen=100;  
-    number_equip=20;
-    pos_min=8.5e-4;       
+    number_equip=25;
+    pos_min=8.5e-6;       
     cutting=round(number_equip*0.4/2);
     prob_mutation=1/100;  
     k_friends=round(number_equip.*0.3);
@@ -139,7 +139,7 @@ if infanteria
                     cargaPromedioBaterias(hora)=mean(memory_SOCi);
                     memory_SOCL(:,hora)=repmat(mean(battery.SOCL(:,hora)),length(battery.SOCL(:,hora)),1);
                     config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
-                    energy_accumulator(hora,:)=[mean([abs(battery.SOCi),diesel.generar]),generacion];
+                    energy_accumulator(hora,:)=[mean([battery.descarga,diesel.generar]),generacion];
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
                     structure_memory(hora).best_equipos=best_equipos;
@@ -165,7 +165,7 @@ if infanteria
                     %Fin puta tonteria
  
                     if ~fast_mode
-                        printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_lcoe)
+                        %printImages(hora,memoria_equipos,config,best_equipos,best_lcoe,memoria_lcoe)
                     end
                     break;
                 end
@@ -204,12 +204,12 @@ if infanteria
         timer_keep(hora)=toc;
     end
     %%
-    figure ('Name','Cambio carga baterias')
-    plot(cargaPromedioBaterias,'g-o');
-    xlabel("Horas");
-    ylabel("EnergiaBaterias");
-    title('Carga de baterias')
-    grid()
+%     figure ('Name','Cambio carga baterias')
+%     plot(cargaPromedioBaterias,'g-o');
+%     xlabel("Horas");
+%     ylabel("EnergiaBaterias");
+%     title('Carga de baterias')
+%     grid()
     %%
     
     %
@@ -251,8 +251,8 @@ if infanteria
 %     a.Turbina=ceil(config(horaWin,2));
 %     a.LCOE=config(horaWin,3);
     horaWin=idS;
-    printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
-        structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
+   % printImages(horaWin,structure_memory(horaWin).memoria_equipos,structure_memory(horaWin).config,...
+   %     structure_memory(horaWin).best_equipos,structure_memory(horaWin).best_lcoe,structure_memory(horaWin).memoria_lcoe);
     disp(a);
     panel.cantidad=a.Modulo;
     turbina.cantidad=a.Turbina;
@@ -271,6 +271,9 @@ if infanteria
         battery.carga=0;
         battery.descarga=0;
         battery.SOCi=memory_SOCi;
+        if(hora==3328)
+            disp("Pause");
+        end
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
         memory_SOCi=battery.SOCi;
 %         maxDiesel=maxDiesel-potenciaUsada.diesel;
@@ -292,6 +295,12 @@ if infanteria
             battery.SOCi=battery.maxEnergySelected;
         end
     end
+     keep_ans=round(keep_ans,3);
+     %Tabla mostrar
+     variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaMotor','EnergiaRequerida','EnergiaGenerada','Balance'};
+     vMostrar=[keep_ans(:,3),keep_ans(:,4),keep_ans(:,end),keep_ans(:,2),keep_ans(:,1),keep_ans(:,2)-keep_ans(:,1)];
+     vTable=array2table(vMostrar,'VariableNames',variablesName);
+     %Fin tabla mostrar
      variablesName={'EnergiaModulo','EnergiaTurbina','EnergiaBaterias','EnergiaMotor','EnergiaRequerida','EnergiaGenerada'};
      keep_ansTable=array2table([keep_ans(:,3:end),keep_ans(:,1),keep_ans(:,end)],'VariableNames',variablesName);
      keep_ans=keep_ans(:,[3:end,2,1]);
@@ -363,8 +372,8 @@ if infanteria
     tabla_energias=array2table(vPotenciasNew,'VariableNames',variablesName,'RowName',diaName);
     disp(tabla_energias)
     total=true;   
-    figure('Name','Tabla de validación de la herramienta 1');
-    title('Validación de la herramienta');
+    %figure('Name','Tabla de validación de la herramienta 1');
+    %title('Validación de la herramienta');
     if ~total
         variablesNameUse=variablesName([end-1,end]);
     else
@@ -372,37 +381,37 @@ if infanteria
     end
     j=1;
     
-    formas=["-o","-s"];
-    for name = variablesNameUse(1:end-2)
-        p=randi(length(formas),1);
-        color='ycbg';
-        plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
-            'MarkerEdgeColor','k','DisplayName',string(name));
-        j=j+1;
-        hold on
-    end
-    clear j
-    grid minor ;
-    legend();
-    xlabel('Día');
-    ylabel('Energía kWh');
-    figure('Name','Tabla de validación de la herramienta 1');
-    title('Validación de la herramienta');
-    j=1;
-        formas=["-o","-s"];
-    for name = variablesNameUse(end-1:end)
-        p=randi(length(formas),1);
-        color='rb';
-        plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
-            'MarkerEdgeColor','k','DisplayName',string(name));
-        j=j+1;
-        hold on
-    end
-    clear j
-    grid minor ;
-    legend();
-    xlabel('Día');
-    ylabel('Energía kWh');
+%     formas=["-o","-s"];
+%     for name = variablesNameUse(1:end-2)
+%         p=randi(length(formas),1);
+%         color='ycbg';
+%         plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
+%             'MarkerEdgeColor','k','DisplayName',string(name));
+%         j=j+1;
+%         hold on
+%     end
+%     clear j
+%     grid minor ;
+%     legend();
+%     xlabel('Día');
+%     ylabel('Energía kWh');
+%     figure('Name','Tabla de validación de la herramienta 1');
+%     title('Validación de la herramienta');
+%     j=1;
+%         formas=["-o","-s"];
+%     for name = variablesNameUse(end-1:end)
+%         p=randi(length(formas),1);
+%         color='rb';
+%         plot(tabla_energias.(string(name)),formas(p),'Color',color(j),'MarkerFaceColor',color(j),...
+%             'MarkerEdgeColor','k','DisplayName',string(name));
+%         j=j+1;
+%         hold on
+%     end
+%     clear j
+%     grid minor ;
+%     legend();
+%     xlabel('Día');
+%     ylabel('Energía kWh');
  
     [x_rango,~]=size(rangos);
     diasMuestra=zeros(x_rango,2);
@@ -451,7 +460,12 @@ if infanteria
     ylabel("Energía kWh");
     grid minor ;
     legend();
-        %Fim imprimir puta tonteria
+    
+    fig = uifigure();
+    uit = uitable(fig);
+    uit.Position = [20 20 720 320];
+    uit.Data = vTable;
+    uit.RowName = 'numbered';
     close (f);
 
     catch ME
