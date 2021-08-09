@@ -20,6 +20,8 @@ if infanteria
     rangos=[1129,1152;2113,2137;5953,5976;7369,7391]; 
     helpRandi=@(cantidadEquipo,minEquip,maxEquip)(randi([minEquip,maxEquip],cantidadEquipo,1));
     pError=@(aprox,exacto)(abs(aprox-exacto).*100./exacto);
+    nBaterias=@(potencia_requerida,dias_autonomia,ef_inversor,ef_bateria,ind_auto,capacidad_baterias)...
+    ( (potencia_requerida./24.*dias_autonomia)./(ef_inversor.*ef_bateria.*ind_auto.*capacidad_baterias) );
     v_h=@(h,h_ref,v_href,alpha)((h/h_ref).^alpha.*v_href);
     %%
     %Especificaciones Algoritmo Genetico
@@ -139,7 +141,9 @@ if infanteria
                     cargaPromedioBaterias(hora)=mean(memory_SOCi);
                     memory_SOCL(:,hora)=repmat(mean(battery.SOCL(:,hora)),length(battery.SOCL(:,hora)),1);
                     config(hora,:)=mean([panel.cantidad,turbina.cantidad,lco.total]);
+                    capacidad=battery.voltaje.*battery.amperioHora.*10.^3;
                     energy_accumulator(hora,:)=[mean([battery.descarga,diesel.generar]),generacion];
+                    
                     structure_memory(hora).memoria_equipos=memoria_equipos;
                     structure_memory(hora).config=config;
                     structure_memory(hora).best_equipos=best_equipos;
@@ -213,6 +217,8 @@ if infanteria
     %%
     
     %
+    
+    
     topPot=max(potencia_requerida);
     k1=config(:,1)>0; %Las configuraciones que tienen más de 0 paneles
     %En todos usa potencia nominal [kW]
@@ -237,12 +243,14 @@ if infanteria
             a=[config(hora_ver,:),...
                 ceil(sum(energy_accumulator(:,1),1)./battery.SOCMax),sum(energy_accumulator(:,2),1),horas_activo,median(energy_accumulator(:,3))];
     end
-
+    numeroBaterias=nBaterias(potencia_requerida.*10^3,4,inverter.eficiencia,battery.eficiencia,battery.autoDescarga,capacidad);
+    numeroBaterias=round(mean(numeroBaterias));
     a=array2table(a,'variableNames',{'Modulo','Turbina','LCOE','Numero bateria','Numero motores diesel','Horas diesel activo','IteracionMediana'});
     a.Modulo=ceil(a.Modulo);
     a.Turbina=ceil(a.Turbina);
     a.("Numero motores diesel")=ceil(a.("Numero motores diesel")./valorDiesel.*10^-3);
-    a.("Numero bateria")=ceil(a.("Numero bateria") ./(battery.SOCMax.*10^3));
+    %LEGALIZARa.("Numero bateria")=ceil(a.("Numero bateria") ./(battery.SOCMax.*10^3));
+    a.("Numero bateria")=numeroBaterias;
 %     setM=normalize([a.Modulo,a.Turbina,a.LCOE]);
 %     setA=normalize(config);
 %     distancesset=pdist2(setM,setA);
@@ -271,7 +279,7 @@ if infanteria
         battery.carga=0;
         battery.descarga=0;
         battery.SOCi=memory_SOCi;
-        if(hora==3328)
+        if(hora==3277)
             disp("Pause");
         end
         [panel,turbina,battery,diesel,lco,potenciaUsada]=planta_new(clima,panel,turbina,inverter,battery,lco,potencia_requerida,hora,diesel);
@@ -462,8 +470,9 @@ if infanteria
     legend();
     
     fig = uifigure();
+    fig.Position(3:4)=[1000,500];
     uit = uitable(fig);
-    uit.Position = [20 20 720 320];
+    uit.Position = [20 20 1000 500];
     uit.Data = vTable;
     uit.RowName = 'numbered';
     close (f);

@@ -56,6 +56,12 @@ disp("Pause");
 end
 diesel.generar=potenciaRequeria(hora)-renovable_gen;
 diesel.generar(diesel.generar<0)=diesel.generar(diesel.generar<0).*0;
+%Agregado
+old_pv_gen=pv_gen;
+pv_gen(pv_gen>0)=pv_gen(pv_gen>0)+diesel.generar(pv_gen>0).*(1-0.2);
+diesel.generar(pv_gen>0)=diesel.generar(pv_gen>0).*(1-0.8);
+renovable_gen=renovable_gen+pv_gen-old_pv_gen;
+%Fin agregado
 diesel.eficiencia=diesel.generar./(diesel.consumoCalorifico.*10^3);
 energia_generada=renovable_gen+diesel.generar;
 potencia.panel=pv_gen;
